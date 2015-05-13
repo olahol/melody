@@ -11,7 +11,7 @@
 go get github.com/olahol/melody
 ```
 
-## Example
+## [Example](https://github.com/olahol/melody/tree/master/examples)
 
 [Simple broadcasting chat server](https://github.com/olahol/melody/tree/master/examples/chat),
 error handling left as en exercise for the developer.
@@ -46,3 +46,6 @@ func main() {
 ```
 
 [![Chat demo](https://cdn.rawgit.com/olahol/melody/master/examples/chat/demo.gif "Demo")](https://github.com/olahol/melody/tree/master/examples/chat)
+
+
+## [Api](https://godoc.org/github.com/olahol/melody)
