@@ -83,12 +83,12 @@ func (s *Session) readPump(messageHandler handleMessageFunc, errorHandler handle
 	}
 }
 
-// Write a message to session.
+// Write message to session.
 func (s *Session) Write(msg []byte) {
 	s.writeMessage(&envelope{t: websocket.TextMessage, msg: msg})
 }
 
-// Close a session.
+// Close session.
 func (s *Session) Close() {
 	s.writeMessage(&envelope{t: websocket.CloseMessage, msg: []byte{}})
 }

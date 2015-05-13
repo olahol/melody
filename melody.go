@@ -58,7 +58,7 @@ func (m *Melody) HandleMessage(fn func(*Session, []byte)) {
 }
 
 // Fires when a session has an error.
-func (m *Melody) HandleError(fn handleErrorFunc) {
+func (m *Melody) HandleError(fn func(*Session, error)) {
 	m.errorHandler = fn
 }
 
