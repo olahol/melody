@@ -1,0 +1,32 @@
+<html>
+  <head>
+    <title>Melody example: file watching</title>
+  </head>
+
+  <style>
+    #file {
+      text-align: left;
+      background: #f1f1f1;
+      width: 500px;
+      min-height: 300px;
+      padding: 20px;
+    }
+  </style>
+
+  <body>
+    <center>
+      <h3>Watching a file</h3>
+      <pre id="file"></pre>
+    </center>
+
+    <script>
+      var url = 'ws://' + window.location.host + '/ws';
+      var c = new WebSocket(url);
+
+      c.onmessage = function(msg){
+        var el = document.getElementById("file");
+        el.innerText = msg.data;
+      }
+    </script>
+  </body>
+</html>
