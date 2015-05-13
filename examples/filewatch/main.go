@@ -12,7 +12,7 @@ func main() {
 	file := "file.txt"
 
 	r := gin.Default()
-	m := melody.Default()
+	m := melody.New()
 	w, _ := fsnotify.NewWatcher()
 
 	r.GET("/", func(c *gin.Context) {

@@ -15,7 +15,7 @@ type TestServer struct {
 }
 
 func NewTestServerHandler(handler handleMessageFunc) *TestServer {
-	m := Default()
+	m := New()
 	m.HandleMessage(handler)
 	return &TestServer{
 		m: m,
@@ -23,7 +23,7 @@ func NewTestServerHandler(handler handleMessageFunc) *TestServer {
 }
 
 func NewTestServer() *TestServer {
-	m := Default()
+	m := New()
 	return &TestServer{
 		m: m,
 	}

@@ -25,7 +25,7 @@ func (h *hub) run() {
 			if _, ok := h.sessions[s]; ok {
 				delete(h.sessions, s)
 				close(s.output)
-				s.Conn.Close()
+				s.conn.Close()
 			}
 		case m := <-h.broadcast:
 			for s := range h.sessions {

@@ -5,15 +5,16 @@ import (
 	"time"
 )
 
+// A melody session.
 type Session struct {
-	Conn   *websocket.Conn
+	conn   *websocket.Conn
 	output chan *envelope
 	config *Config
 }
 
 func newSession(config *Config, conn *websocket.Conn) *Session {
 	return &Session{
-		Conn:   conn,
+		conn:   conn,
 		output: make(chan *envelope, config.MessageBufferSize),
 		config: config,
 	}
@@ -24,8 +25,8 @@ func (s *Session) writeMessage(message *envelope) {
 }
 
 func (s *Session) writeRaw(message *envelope) error {
-	s.Conn.SetWriteDeadline(time.Now().Add(s.config.WriteWait))
-	return s.Conn.WriteMessage(message.t, message.msg)
+	s.conn.SetWriteDeadline(time.Now().Add(s.config.WriteWait))
+	return s.conn.WriteMessage(message.t, message.msg)
 }
 
 func (s *Session) close() {
@@ -37,7 +38,7 @@ func (s *Session) ping() {
 }
 
 func (s *Session) writePump(errorHandler handleErrorFunc) {
-	defer s.Conn.Close()
+	defer s.conn.Close()
 
 	ticker := time.NewTicker(s.config.PingPeriod)
 	defer ticker.Stop()
@@ -60,18 +61,18 @@ func (s *Session) writePump(errorHandler handleErrorFunc) {
 }
 
 func (s *Session) readPump(messageHandler handleMessageFunc, errorHandler handleErrorFunc) {
-	defer s.Conn.Close()
+	defer s.conn.Close()
 
-	s.Conn.SetReadLimit(s.config.MaxMessageSize)
-	s.Conn.SetReadDeadline(time.Now().Add(s.config.PongWait))
+	s.conn.SetReadLimit(s.config.MaxMessageSize)
+	s.conn.SetReadDeadline(time.Now().Add(s.config.PongWait))
 
-	s.Conn.SetPongHandler(func(string) error {
-		s.Conn.SetReadDeadline(time.Now().Add(s.config.PongWait))
+	s.conn.SetPongHandler(func(string) error {
+		s.conn.SetReadDeadline(time.Now().Add(s.config.PongWait))
 		return nil
 	})
 
 	for {
-		_, message, err := s.Conn.ReadMessage()
+		_, message, err := s.conn.ReadMessage()
 
 		if err != nil {
 			go errorHandler(s, err)
@@ -82,10 +83,12 @@ func (s *Session) readPump(messageHandler handleMessageFunc, errorHandler handle
 	}
 }
 
+// Write a message to session.
 func (s *Session) Write(msg []byte) {
 	s.writeMessage(&envelope{t: websocket.TextMessage, msg: msg})
 }
 
+// Close a session.
 func (s *Session) Close() {
 	s.writeMessage(&envelope{t: websocket.CloseMessage, msg: []byte{}})
 }

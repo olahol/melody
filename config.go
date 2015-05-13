@@ -2,6 +2,7 @@ package melody
 
 import "time"
 
+// Melody configuration, all times in milliseconds.
 type Config struct {
 	WriteWait         time.Duration
 	PongWait          time.Duration
