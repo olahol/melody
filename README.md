@@ -1,3 +1,3 @@
 # melody
 
-> Simple websocket framework for Go
+> :notes: Simple websocket framework for Go
