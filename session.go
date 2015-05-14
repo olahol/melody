@@ -2,21 +2,24 @@ package melody
 
 import (
 	"github.com/gorilla/websocket"
+	"net/http"
 	"time"
 )
 
 // A melody session.
 type Session struct {
-	conn   *websocket.Conn
-	output chan *envelope
-	config *Config
+	Request *http.Request
+	conn    *websocket.Conn
+	output  chan *envelope
+	config  *Config
 }
 
-func newSession(config *Config, conn *websocket.Conn) *Session {
+func newSession(config *Config, conn *websocket.Conn, req *http.Request) *Session {
 	return &Session{
-		conn:   conn,
-		output: make(chan *envelope, config.MessageBufferSize),
-		config: config,
+		Request: req,
+		conn:    conn,
+		output:  make(chan *envelope, config.MessageBufferSize),
+		config:  config,
 	}
 }
 

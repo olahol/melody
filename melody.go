@@ -63,14 +63,14 @@ func (m *Melody) HandleError(fn func(*Session, error)) {
 }
 
 // Handles a http request and upgrades it to a websocket.
-func (m *Melody) HandleRequest(w http.ResponseWriter, r *http.Request) error {
+func (m *Melody) HandleRequest(w http.ResponseWriter, r *http.Request) {
 	conn, err := m.upgrader.Upgrade(w, r, nil)
 
 	if err != nil {
-		return err
+		return
 	}
 
-	session := newSession(m.Config, conn)
+	session := newSession(m.Config, conn, r)
 
 	m.hub.register <- session
 
@@ -83,8 +83,6 @@ func (m *Melody) HandleRequest(w http.ResponseWriter, r *http.Request) error {
 	m.hub.unregister <- session
 
 	go m.disconnectHandler(session)
-
-	return nil
 }
 
 // Broadcasts a message to all sessions.
@@ -94,7 +92,7 @@ func (m *Melody) Broadcast(msg []byte) {
 }
 
 // Broadcasts a message to all sessions that fn returns true for.
-func (m *Melody) BroadcastFilter(fn func(*Session) bool, msg []byte) {
+func (m *Melody) BroadcastFilter(msg []byte, fn func(*Session) bool) {
 	message := &envelope{t: websocket.TextMessage, msg: msg, filter: fn}
 	m.hub.broadcast <- message
 }

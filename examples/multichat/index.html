@@ -1,0 +1,34 @@
+<html>
+  <head>
+    <title>Melody example: chatting</title>
+  </head>
+
+  <style>
+    #chat {
+      text-align: left;
+      background: #f1f1f1;
+      width: 500px;
+      min-height: 300px;
+      padding: 20px;
+    }
+  </style>
+
+  <body>
+    <center>
+      <h3>Join a channel</h3>
+      <input placeholder="channel" id="channel" type="text"><button id="join">Join</button>
+    </center>
+
+    <script>
+      var chan = document.getElementById("channel");
+      var join = document.getElementById("join");
+
+      join.onclick = function () {
+        if (chan.value != "") {
+          window.location = "/channel/" + chan.value;
+        }
+      };
+
+    </script>
+  </body>
+</html>

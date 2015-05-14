@@ -1,17 +1,15 @@
-# melody
+# melody [![Build Status](https://travis-ci.org/olahol/melody.svg)](https://travis-ci.org/olahol/melody) [![GoDoc](https://godoc.org/github.com/olahol/melody?status.svg)](https://godoc.org/github.com/olahol/melody)
 
-[![GoDoc](https://godoc.org/github.com/olahol/melody?status.svg)](https://godoc.org/github.com/olahol/melody)
-[![Build Status](https://travis-ci.org/olahol/melody.svg)](https://travis-ci.org/olahol/melody)
-
-> :notes: Simple websocket framework for Go
+> :notes: Minimalist websocket framework for Go.
 
 Melody is websocket framework based on [github.com/gorilla/websocket](https://github.com/gorilla/websocket)
-that abstracts away the more tedious parts of handling websockets. Features include:
+that abstracts away the tedious parts of handling websockets. It gets out of
+your way so you can write real-time apps. Features include:
 
-* [x] Timeouts for write and read.
-* [x] Built-in ping/pong handling.
-* [x] Message buffer for connections making concurrent writing easy.
-* [x] Simple broadcasting to all or selected sessions.
+* [x] Clear and easy interface similar to `net/http` or Gin.
+* [x] A simple way to broadcast to all or selected connected sessions.
+* [x] Message buffers making concurrent writing safe.
+* [x] Automatic handling of ping/pong and session timeouts.
 
 ## Install
 
@@ -21,10 +19,10 @@ go get github.com/olahol/melody
 
 ## [Example](https://github.com/olahol/melody/tree/master/examples)
 
-[Simple broadcasting chat server](https://github.com/olahol/melody/tree/master/examples/chat),
+[Multi channel chat server](https://github.com/olahol/melody/tree/master/examples/multichat),
 error handling left as en exercise for the developer.
 
-[![Chat demo](https://cdn.rawgit.com/olahol/melody/master/examples/chat/demo.gif "Demo")](https://github.com/olahol/melody/tree/master/examples/chat)
+[![Chat demo](https://cdn.rawgit.com/olahol/melody/master/examples/chat/demo.gif "Demo")](https://github.com/olahol/melody/tree/master/examples/multichat)
 
 ```go
 package main
@@ -43,16 +41,24 @@ func main() {
 		http.ServeFile(c.Writer, c.Request, "index.html")
 	})
 
-	r.GET("/ws", func(c *gin.Context) {
+	r.GET("/channel/:name", func(c *gin.Context) {
+		http.ServeFile(c.Writer, c.Request, "chan.html")
+	})
+
+	r.GET("/channel/:name/ws", func(c *gin.Context) {
 		m.HandleRequest(c.Writer, c.Request)
 	})
 
 	m.HandleMessage(func(s *melody.Session, msg []byte) {
-		m.Broadcast(msg)
+		m.BroadcastFilter(msg, func(q *melody.Session) bool {
+			return q.Request.URL.Path == s.Request.URL.Path
+		})
 	})
 
 	r.Run(":5000")
 }
 ```
 
-### [Documentation](https://godoc.org/github.com/olahol/melody)
+### [More examples](https://github.com/olahol/melody/tree/master/examples)
+
+## [Documentation](https://godoc.org/github.com/olahol/melody)
