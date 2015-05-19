@@ -12,7 +12,7 @@ type filterFunc func(*Session) bool
 
 type Melody struct {
 	Config            *Config
-	upgrader          *websocket.Upgrader
+	Upgrader          *websocket.Upgrader
 	messageHandler    handleMessageFunc
 	errorHandler      handleErrorFunc
 	connectHandler    handleSessionFunc
@@ -33,7 +33,7 @@ func New() *Melody {
 
 	return &Melody{
 		Config:            newConfig(),
-		upgrader:          upgrader,
+		Upgrader:          upgrader,
 		messageHandler:    func(*Session, []byte) {},
 		errorHandler:      func(*Session, error) {},
 		connectHandler:    func(*Session) {},
@@ -64,9 +64,10 @@ func (m *Melody) HandleError(fn func(*Session, error)) {
 
 // Handles a http request and upgrades it to a websocket.
 func (m *Melody) HandleRequest(w http.ResponseWriter, r *http.Request) {
-	conn, err := m.upgrader.Upgrade(w, r, nil)
+	conn, err := m.Upgrader.Upgrade(w, r, nil)
 
 	if err != nil {
+		m.errorHandler(nil, err)
 		return
 	}
 

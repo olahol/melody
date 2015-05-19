@@ -77,6 +77,33 @@ func TestEcho(t *testing.T) {
 	}
 }
 
+func TestUpgrader(t *testing.T) {
+	broadcast := NewTestServer()
+	broadcast.m.HandleMessage(func(session *Session, msg []byte) {
+		session.Write(msg)
+	})
+	server := httptest.NewServer(broadcast)
+	defer server.Close()
+
+	broadcast.m.Upgrader = &websocket.Upgrader{
+		ReadBufferSize:  1024,
+		WriteBufferSize: 1024,
+		CheckOrigin:     func(r *http.Request) bool { return false },
+	}
+
+	broadcast.m.HandleError(func(session *Session, err error) {
+		if err == nil || err.Error() != "websocket: origin not allowed" {
+			t.Error("there should be a origin error")
+		}
+	})
+
+	_, err := NewDialer(server.URL)
+
+	if err == nil || err.Error() != "websocket: bad handshake" {
+		t.Error("there should be a badhandshake error")
+	}
+}
+
 func TestBroadcast(t *testing.T) {
 	broadcast := NewTestServer()
 	broadcast.m.HandleMessage(func(session *Session, msg []byte) {
