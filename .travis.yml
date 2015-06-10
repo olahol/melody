@@ -4,8 +4,8 @@ go:
 before_install:
   - go get github.com/axw/gocov/gocov
   - go get github.com/mattn/goveralls
-  - if ! go get code.google.com/p/go.tools/cmd/cover; then go get golang.org/x/tools/cmd/cover; fi
+  - go get golang.org/x/tools/cmd/cover
 install:
   - go get github.com/gorilla/websocket
 script:
-  - $HOME/gopath/bin/goveralls -service=travis-ci
+  - $HOME/gopath/bin/goveralls -repotoken qvMcTnafRDx1A4t3NXcHpmMzBhU0AYQP1
