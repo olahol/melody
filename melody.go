@@ -11,13 +11,14 @@ type handleSessionFunc func(*Session)
 type filterFunc func(*Session) bool
 
 type Melody struct {
-	Config            *Config
-	Upgrader          *websocket.Upgrader
-	messageHandler    handleMessageFunc
-	errorHandler      handleErrorFunc
-	connectHandler    handleSessionFunc
-	disconnectHandler handleSessionFunc
-	hub               *hub
+	Config               *Config
+	Upgrader             *websocket.Upgrader
+	messageHandler       handleMessageFunc
+	messageHandlerBinary handleMessageFunc
+	errorHandler         handleErrorFunc
+	connectHandler       handleSessionFunc
+	disconnectHandler    handleSessionFunc
+	hub                  *hub
 }
 
 // Returns a new melody instance.
@@ -32,13 +33,14 @@ func New() *Melody {
 	go hub.run()
 
 	return &Melody{
-		Config:            newConfig(),
-		Upgrader:          upgrader,
-		messageHandler:    func(*Session, []byte) {},
-		errorHandler:      func(*Session, error) {},
-		connectHandler:    func(*Session) {},
-		disconnectHandler: func(*Session) {},
-		hub:               hub,
+		Config:               newConfig(),
+		Upgrader:             upgrader,
+		messageHandler:       func(*Session, []byte) {},
+		messageHandlerBinary: func(*Session, []byte) {},
+		errorHandler:         func(*Session, error) {},
+		connectHandler:       func(*Session) {},
+		disconnectHandler:    func(*Session) {},
+		hub:                  hub,
 	}
 }
 
@@ -55,6 +57,11 @@ func (m *Melody) HandleDisconnect(fn func(*Session)) {
 // Callback when a message comes in.
 func (m *Melody) HandleMessage(fn func(*Session, []byte)) {
 	m.messageHandler = fn
+}
+
+// Callback when a binary message comes in.
+func (m *Melody) HandleMessageBinary(fn func(*Session, []byte)) {
+	m.messageHandlerBinary = fn
 }
 
 // Fires when a session has an error.
@@ -79,7 +86,7 @@ func (m *Melody) HandleRequest(w http.ResponseWriter, r *http.Request) {
 
 	go session.writePump(m.errorHandler)
 
-	session.readPump(m.messageHandler, m.errorHandler)
+	session.readPump(m.messageHandler, m.messageHandlerBinary, m.errorHandler)
 
 	m.hub.unregister <- session
 
@@ -96,4 +103,11 @@ func (m *Melody) Broadcast(msg []byte) {
 func (m *Melody) BroadcastFilter(msg []byte, fn func(*Session) bool) {
 	message := &envelope{t: websocket.TextMessage, msg: msg, filter: fn}
 	m.hub.broadcast <- message
+}
+
+// Broadcasts a message to all sessions except session `s`.
+func (m *Melody) BroadcastOthers(msg []byte, s *Session) {
+	m.BroadcastFilter(msg, func(q *Session) bool {
+		return s != q
+	})
 }

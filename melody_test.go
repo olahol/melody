@@ -77,6 +77,69 @@ func TestEcho(t *testing.T) {
 	}
 }
 
+func TestEchoBinary(t *testing.T) {
+	echo := NewTestServer()
+	echo.m.HandleMessageBinary(func(session *Session, msg []byte) {
+		session.WriteBinary(msg)
+	})
+	server := httptest.NewServer(echo)
+	defer server.Close()
+
+	fn := func(msg string) bool {
+		conn, err := NewDialer(server.URL)
+		defer conn.Close()
+
+		if err != nil {
+			t.Error(err)
+			return false
+		}
+
+		conn.WriteMessage(websocket.BinaryMessage, []byte(msg))
+
+		_, ret, err := conn.ReadMessage()
+
+		if err != nil {
+			t.Error(err)
+			return false
+		}
+
+		if msg != string(ret) {
+			t.Errorf("%s should equal %s", msg, string(ret))
+			return false
+		}
+
+		return true
+	}
+
+	if err := quick.Check(fn, nil); err != nil {
+		t.Error(err)
+	}
+}
+
+func TestHandlers(t *testing.T) {
+	echo := NewTestServer()
+	echo.m.HandleMessage(func(session *Session, msg []byte) {
+		session.Write(msg)
+	})
+	server := httptest.NewServer(echo)
+	defer server.Close()
+
+	var q *Session
+
+	echo.m.HandleConnect(func(session *Session) {
+		q = session
+		session.Close()
+	})
+
+	echo.m.HandleDisconnect(func(session *Session) {
+		if q != session {
+			t.Error("disconnecting session should be the same as connecting")
+		}
+	})
+
+	NewDialer(server.URL)
+}
+
 func TestUpgrader(t *testing.T) {
 	broadcast := NewTestServer()
 	broadcast.m.HandleMessage(func(session *Session, msg []byte) {
@@ -109,6 +172,65 @@ func TestBroadcast(t *testing.T) {
 	broadcast.m.HandleMessage(func(session *Session, msg []byte) {
 		broadcast.m.Broadcast(msg)
 	})
+	server := httptest.NewServer(broadcast)
+	defer server.Close()
+
+	n := 10
+
+	fn := func(msg string) bool {
+		conn, _ := NewDialer(server.URL)
+		defer conn.Close()
+
+		listeners := make([]*websocket.Conn, n)
+		for i := 0; i < n; i++ {
+			listener, _ := NewDialer(server.URL)
+			listeners[i] = listener
+			defer listeners[i].Close()
+		}
+
+		conn.WriteMessage(websocket.TextMessage, []byte(msg))
+
+		for i := 0; i < n; i++ {
+			_, ret, err := listeners[i].ReadMessage()
+
+			if err != nil {
+				t.Error(err)
+				return false
+			}
+
+			if msg != string(ret) {
+				t.Errorf("%s should equal %s", msg, string(ret))
+				return false
+			}
+		}
+
+		_, ret, err := conn.ReadMessage()
+
+		if err != nil {
+			t.Error(err)
+			return false
+		}
+
+		if msg != string(ret) {
+			t.Errorf("%s should equal %s", msg, string(ret))
+			return false
+		}
+
+		return true
+	}
+
+	if err := quick.Check(fn, nil); err != nil {
+		t.Error(err)
+	}
+}
+
+func TestBroadcastOthers(t *testing.T) {
+	broadcast := NewTestServer()
+	broadcast.m.HandleMessage(func(session *Session, msg []byte) {
+		broadcast.m.BroadcastOthers(msg, session)
+	})
+	broadcast.m.Config.PongWait = time.Second
+	broadcast.m.Config.PingPeriod = time.Second * 9 / 10
 	server := httptest.NewServer(broadcast)
 	defer server.Close()
 
@@ -175,23 +297,18 @@ func TestPingPong(t *testing.T) {
 	}
 }
 
-/*
 func TestBroadcastFilter(t *testing.T) {
-	echo := NewTestServer()
-	echo.m.HandleMessage(func(session *Session, msg []byte) {
-		echo.m.BroadcastFilter(func(s *Session) bool {
-			//return s == session
-			return false
-		}, msg)
+	broadcast := NewTestServer()
+	broadcast.m.HandleMessage(func(session *Session, msg []byte) {
+		broadcast.m.BroadcastFilter(msg, func(q *Session) bool {
+			return session == q
+		})
 	})
-	server := httptest.NewServer(echo)
+	server := httptest.NewServer(broadcast)
 	defer server.Close()
 
 	fn := func(msg string) bool {
 		conn, err := NewDialer(server.URL)
-		conn.SetPingHandler(func(string) error {
-			return nil
-		})
 		defer conn.Close()
 
 		if err != nil {
@@ -218,49 +335,5 @@ func TestBroadcastFilter(t *testing.T) {
 
 	if err := quick.Check(fn, nil); err != nil {
 		t.Error(err)
-	}
-}
-*/
-
-func BenchmarkEcho(b *testing.B) {
-	echo := NewTestServerHandler(func(session *Session, msg []byte) {
-		session.Write(msg)
-	})
-	server := httptest.NewServer(echo)
-	defer server.Close()
-
-	conn, _ := NewDialer(server.URL)
-	defer conn.Close()
-
-	for i := 0; i < b.N; i++ {
-		conn.WriteMessage(websocket.TextMessage, []byte("test"))
-		conn.ReadMessage()
-	}
-}
-
-func BenchmarkBroadcast(b *testing.B) {
-	broadcast := NewTestServer()
-	broadcast.m.HandleMessage(func(session *Session, msg []byte) {
-		broadcast.m.Broadcast(msg)
-	})
-	server := httptest.NewServer(broadcast)
-	defer server.Close()
-
-	conn, _ := NewDialer(server.URL)
-	defer conn.Close()
-
-	n := 10
-	listeners := make([]*websocket.Conn, n)
-	for i := 0; i < n; i++ {
-		listener, _ := NewDialer(server.URL)
-		listeners[i] = listener
-		defer listeners[i].Close()
-	}
-
-	for i := 0; i < b.N; i++ {
-		conn.WriteMessage(websocket.TextMessage, []byte("test"))
-		for i := 0; i < n; i++ {
-			listeners[i].ReadMessage()
-		}
 	}
 }

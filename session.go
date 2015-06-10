@@ -29,7 +29,21 @@ func (s *Session) writeMessage(message *envelope) {
 
 func (s *Session) writeRaw(message *envelope) error {
 	s.conn.SetWriteDeadline(time.Now().Add(s.config.WriteWait))
-	return s.conn.WriteMessage(message.t, message.msg)
+	err := s.conn.WriteMessage(message.t, message.msg)
+
+	if err != nil {
+		return err
+	}
+
+	if message.t == websocket.CloseMessage {
+		err := s.conn.Close()
+
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (s *Session) close() {
@@ -63,7 +77,7 @@ func (s *Session) writePump(errorHandler handleErrorFunc) {
 	}
 }
 
-func (s *Session) readPump(messageHandler handleMessageFunc, errorHandler handleErrorFunc) {
+func (s *Session) readPump(messageHandler handleMessageFunc, messageHandlerBinary handleMessageFunc, errorHandler handleErrorFunc) {
 	defer s.conn.Close()
 
 	s.conn.SetReadLimit(s.config.MaxMessageSize)
@@ -75,15 +89,26 @@ func (s *Session) readPump(messageHandler handleMessageFunc, errorHandler handle
 	})
 
 	for {
-		_, message, err := s.conn.ReadMessage()
+		t, message, err := s.conn.ReadMessage()
 
 		if err != nil {
 			go errorHandler(s, err)
 			break
 		}
 
-		go messageHandler(s, message)
+		if t == websocket.TextMessage {
+			go messageHandler(s, message)
+		}
+
+		if t == websocket.BinaryMessage {
+			go messageHandlerBinary(s, message)
+		}
 	}
+}
+
+// Write message to session.
+func (s *Session) WriteBinary(msg []byte) {
+	s.writeMessage(&envelope{t: websocket.BinaryMessage, msg: msg})
 }
 
 // Write message to session.

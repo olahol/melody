@@ -1,9 +1,9 @@
 package main
 
 import (
-	"../../"
 	"github.com/gin-gonic/gin"
 	"github.com/go-fsnotify/fsnotify"
+	"github.com/olahol/melody"
 	"io/ioutil"
 	"net/http"
 )
