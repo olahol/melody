@@ -204,18 +204,6 @@ func TestBroadcast(t *testing.T) {
 			}
 		}
 
-		_, ret, err := conn.ReadMessage()
-
-		if err != nil {
-			t.Error(err)
-			return false
-		}
-
-		if msg != string(ret) {
-			t.Errorf("%s should equal %s", msg, string(ret))
-			return false
-		}
-
 		return true
 	}
 
