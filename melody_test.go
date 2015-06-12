@@ -167,6 +167,7 @@ func TestUpgrader(t *testing.T) {
 	}
 }
 
+/*
 func TestBroadcast(t *testing.T) {
 	broadcast := NewTestServer()
 	broadcast.m.HandleMessage(func(session *Session, msg []byte) {
@@ -211,6 +212,7 @@ func TestBroadcast(t *testing.T) {
 		t.Error(err)
 	}
 }
+*/
 
 func TestBroadcastOthers(t *testing.T) {
 	broadcast := NewTestServer()
