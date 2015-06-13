@@ -31,10 +31,10 @@ func (h *hub) run() {
 			for s := range h.sessions {
 				if m.filter != nil {
 					if m.filter(s) {
-						s.writeMessage(m)
+						go s.writeMessage(m)
 					}
 				} else {
-					s.writeMessage(m)
+					go s.writeMessage(m)
 				}
 			}
 		}
