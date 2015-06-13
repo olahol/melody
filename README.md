@@ -1,7 +1,7 @@
 # melody
 
 [![Build Status](https://travis-ci.org/olahol/melody.svg)](https://travis-ci.org/olahol/melody)
-[![Coverage Status](https://img.shields.io/coveralls/olahol/melody?style=flat)](https://coveralls.io/r/olahol/melody)
+[![Coverage Status](https://img.shields.io/coveralls/olahol/melody.svg?style=flat)](https://coveralls.io/r/olahol/melody)
 [![GoDoc](https://godoc.org/github.com/olahol/melody?status.svg)](https://godoc.org/github.com/olahol/melody)
 
 > :notes: Minimalist websocket framework for Go.
