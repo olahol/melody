@@ -207,8 +207,8 @@ func TestBroadcast(t *testing.T) {
 		return true
 	}
 
-	if err := quick.Check(fn, nil); err != nil {
-		t.Error(err)
+	if !fn("test") {
+		t.Errorf("should not be false")
 	}
 }
 
@@ -254,8 +254,8 @@ func TestBroadcastOthers(t *testing.T) {
 		return true
 	}
 
-	if err := quick.Check(fn, nil); err != nil {
-		t.Error(err)
+	if !fn("test") {
+		t.Errorf("should not be false")
 	}
 }
 
@@ -321,7 +321,7 @@ func TestBroadcastFilter(t *testing.T) {
 		return true
 	}
 
-	if err := quick.Check(fn, nil); err != nil {
-		t.Error(err)
+	if !fn("test") {
+		t.Errorf("should not be false")
 	}
 }
