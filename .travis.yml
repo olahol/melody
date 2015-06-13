@@ -8,4 +8,4 @@ before_install:
 install:
   - go get github.com/gorilla/websocket
 script:
-  - $HOME/gopath/bin/goveralls -repotoken qvMcTnafRDx1A4t3NXcHpmMzBhU0AYQP1
+  - $HOME/gopath/bin/goveralls -service=travis-ci
