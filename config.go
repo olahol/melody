@@ -2,13 +2,13 @@ package melody
 
 import "time"
 
-// Melody configuration, all times in milliseconds.
+// Melody configuration.
 type Config struct {
-	WriteWait         time.Duration
-	PongWait          time.Duration
-	PingPeriod        time.Duration
-	MaxMessageSize    int64
-	MessageBufferSize int
+	WriteWait         time.Duration // Milliseconds until write times out.
+	PongWait          time.Duration // Timeout for waiting on pong.
+	PingPeriod        time.Duration // Milliseconds between pings.
+	MaxMessageSize    int64         // Maximum size in bytes of a message.
+	MessageBufferSize int           // Size of each sessions message buffer.
 }
 
 func newConfig() *Config {

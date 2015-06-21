@@ -107,13 +107,13 @@ func (s *Session) readPump(messageHandler handleMessageFunc, messageHandlerBinar
 }
 
 // Write message to session.
-func (s *Session) WriteBinary(msg []byte) {
-	s.writeMessage(&envelope{t: websocket.BinaryMessage, msg: msg})
-}
-
-// Write message to session.
 func (s *Session) Write(msg []byte) {
 	s.writeMessage(&envelope{t: websocket.TextMessage, msg: msg})
+}
+
+// Write binary message to session.
+func (s *Session) WriteBinary(msg []byte) {
+	s.writeMessage(&envelope{t: websocket.BinaryMessage, msg: msg})
 }
 
 // Close session.

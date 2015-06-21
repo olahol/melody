@@ -21,7 +21,7 @@ type Melody struct {
 	hub                  *hub
 }
 
-// Returns a new melody instance.
+// Returns a new melody instance with default Upgrader and Config.
 func New() *Melody {
 	upgrader := &websocket.Upgrader{
 		ReadBufferSize:  1024,
@@ -54,7 +54,7 @@ func (m *Melody) HandleDisconnect(fn func(*Session)) {
 	m.disconnectHandler = fn
 }
 
-// Callback when a message comes in.
+// Callback when a text message comes in.
 func (m *Melody) HandleMessage(fn func(*Session, []byte)) {
 	m.messageHandler = fn
 }
@@ -69,7 +69,7 @@ func (m *Melody) HandleError(fn func(*Session, error)) {
 	m.errorHandler = fn
 }
 
-// Handles a http request and upgrades it to a websocket.
+// Handles http requests and upgrades them to websocket connections.
 func (m *Melody) HandleRequest(w http.ResponseWriter, r *http.Request) {
 	conn, err := m.Upgrader.Upgrade(w, r, nil)
 
@@ -105,7 +105,7 @@ func (m *Melody) BroadcastFilter(msg []byte, fn func(*Session) bool) {
 	m.hub.broadcast <- message
 }
 
-// Broadcasts a message to all sessions except session `s`.
+// Broadcasts a message to all sessions except session s.
 func (m *Melody) BroadcastOthers(msg []byte, s *Session) {
 	m.BroadcastFilter(msg, func(q *Session) bool {
 		return s != q
