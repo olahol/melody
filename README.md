@@ -66,3 +66,13 @@ func main() {
 ### [More examples](https://github.com/olahol/melody/tree/master/examples)
 
 ## [Documentation](https://godoc.org/github.com/olahol/melody)
+
+
+## FAQ
+
+If you are getting a `403` when trying  to connect to your websocket you can [change allow all origin hosts](http://godoc.org/github.com/gorilla/websocket#hdr-Origin_Considerations):
+
+```go
+m := melody.New()
+m.Upgrader.CheckOrigin = func(r *http.Request) bool { return true }
+```
