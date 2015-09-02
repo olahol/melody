@@ -1,13 +1,16 @@
 package melody
 
 import (
-	"github.com/gorilla/websocket"
+	"math/rand"
 	"net/http"
 	"net/http/httptest"
+	"reflect"
 	"strings"
 	"testing"
 	"testing/quick"
 	"time"
+
+	"github.com/gorilla/websocket"
 )
 
 type TestServer struct {
@@ -75,6 +78,17 @@ func TestEcho(t *testing.T) {
 	if err := quick.Check(fn, nil); err != nil {
 		t.Error(err)
 	}
+
+	// we also wanna check manually for a string longer than 512 characters
+	// because this was failing
+	manualCheckValues := func(vs []reflect.Value, _ *rand.Rand) {
+		vs[0] = reflect.ValueOf(string(make([]byte, 513)))
+	}
+
+	if err := quick.Check(fn, &quick.Config{Values: manualCheckValues}); err != nil {
+		t.Error(err)
+	}
+
 }
 
 func TestEchoBinary(t *testing.T) {
