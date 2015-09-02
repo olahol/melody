@@ -60,16 +60,17 @@ func (s *Session) writePump(errorHandler handleErrorFunc) {
 	ticker := time.NewTicker(s.config.PingPeriod)
 	defer ticker.Stop()
 
+loop:
 	for {
 		select {
 		case msg, ok := <-s.output:
 			if !ok {
 				s.close()
-				return
+				break loop
 			}
 			if err := s.writeRaw(msg); err != nil {
 				go errorHandler(s, err)
-				return
+				break loop
 			}
 		case <-ticker.C:
 			s.ping()

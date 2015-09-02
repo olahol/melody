@@ -5,6 +5,8 @@ type hub struct {
 	broadcast  chan *envelope
 	register   chan *Session
 	unregister chan *Session
+	exit       chan bool
+	open       bool
 }
 
 func newHub() *hub {
@@ -13,10 +15,13 @@ func newHub() *hub {
 		broadcast:  make(chan *envelope),
 		register:   make(chan *Session),
 		unregister: make(chan *Session),
+		exit:       make(chan bool),
+		open:       true,
 	}
 }
 
 func (h *hub) run() {
+loop:
 	for {
 		select {
 		case s := <-h.register:
@@ -24,8 +29,8 @@ func (h *hub) run() {
 		case s := <-h.unregister:
 			if _, ok := h.sessions[s]; ok {
 				delete(h.sessions, s)
-				close(s.output)
 				s.conn.Close()
+				close(s.output)
 			}
 		case m := <-h.broadcast:
 			for s := range h.sessions {
@@ -37,6 +42,14 @@ func (h *hub) run() {
 					go s.writeMessage(m)
 				}
 			}
+		case <-h.exit:
+			for s := range h.sessions {
+				delete(h.sessions, s)
+				s.conn.Close()
+				close(s.output)
+			}
+			h.open = false
+			break loop
 		}
 	}
 }

@@ -88,7 +88,9 @@ func (m *Melody) HandleRequest(w http.ResponseWriter, r *http.Request) {
 
 	session.readPump(m.messageHandler, m.messageHandlerBinary, m.errorHandler)
 
-	m.hub.unregister <- session
+	if m.hub.open {
+		m.hub.unregister <- session
+	}
 
 	go m.disconnectHandler(session)
 }
@@ -110,4 +112,9 @@ func (m *Melody) BroadcastOthers(msg []byte, s *Session) {
 	m.BroadcastFilter(msg, func(q *Session) bool {
 		return s != q
 	})
+}
+
+// Closes the melody instance and all connected sessions.
+func (m *Melody) Close() {
+	m.hub.exit <- true
 }

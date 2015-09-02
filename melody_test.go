@@ -325,3 +325,18 @@ func TestBroadcastFilter(t *testing.T) {
 		t.Errorf("should not be false")
 	}
 }
+
+func TestStop(t *testing.T) {
+	noecho := NewTestServer()
+	server := httptest.NewServer(noecho)
+	defer server.Close()
+
+	conn, err := NewDialer(server.URL)
+	defer conn.Close()
+
+	if err != nil {
+		t.Error(err)
+	}
+
+	noecho.m.Close()
+}
