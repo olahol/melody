@@ -340,3 +340,26 @@ func TestStop(t *testing.T) {
 
 	noecho.m.Close()
 }
+
+func TestSmallMessageBuffer(t *testing.T) {
+	echo := NewTestServerHandler(func(session *Session, msg []byte) {
+		session.Write(msg)
+	})
+	echo.m.Config.MessageBufferSize = 0
+	echo.m.HandleError(func(s *Session, err error) {
+		if err == nil {
+			t.Error("there should be a buffer full error here")
+		}
+	})
+	server := httptest.NewServer(echo)
+	defer server.Close()
+
+	conn, err := NewDialer(server.URL)
+	defer conn.Close()
+
+	if err != nil {
+		t.Error(err)
+	}
+
+	conn.WriteMessage(websocket.TextMessage, []byte("12345"))
+}

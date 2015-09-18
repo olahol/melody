@@ -36,10 +36,10 @@ loop:
 			for s := range h.sessions {
 				if m.filter != nil {
 					if m.filter(s) {
-						go s.writeMessage(m)
+						s.writeMessage(m)
 					}
 				} else {
-					go s.writeMessage(m)
+					s.writeMessage(m)
 				}
 			}
 		case <-h.exit:

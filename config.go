@@ -8,7 +8,7 @@ type Config struct {
 	PongWait          time.Duration // Timeout for waiting on pong.
 	PingPeriod        time.Duration // Milliseconds between pings.
 	MaxMessageSize    int64         // Maximum size in bytes of a message.
-	MessageBufferSize int           // Size of each sessions message buffer.
+	MessageBufferSize int           // The max amount of messages that can be in a sessions buffer before it starts dropping them.
 }
 
 func newConfig() *Config {

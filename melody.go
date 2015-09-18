@@ -78,15 +78,20 @@ func (m *Melody) HandleRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	session := newSession(m.Config, conn, r)
+	session := &Session{
+		Request: r,
+		conn:    conn,
+		output:  make(chan *envelope, m.Config.MessageBufferSize),
+		melody:  m,
+	}
 
 	m.hub.register <- session
 
 	go m.connectHandler(session)
 
-	go session.writePump(m.errorHandler)
+	go session.writePump()
 
-	session.readPump(m.messageHandler, m.messageHandlerBinary, m.errorHandler)
+	session.readPump()
 
 	if m.hub.open {
 		m.hub.unregister <- session
