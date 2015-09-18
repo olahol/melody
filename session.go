@@ -16,9 +16,9 @@ type Session struct {
 }
 
 func (s *Session) writeMessage(message *envelope) {
-	if len(s.output) < s.melody.Config.MessageBufferSize {
-		s.output <- message
-	} else {
+	select {
+	case s.output <- message:
+	default:
 		s.melody.errorHandler(s, errors.New("Message buffer full"))
 	}
 }
