@@ -100,21 +100,40 @@ func (m *Melody) HandleRequest(w http.ResponseWriter, r *http.Request) {
 	go m.disconnectHandler(session)
 }
 
-// Broadcasts a message to all sessions.
+// Broadcasts a text message to all sessions.
 func (m *Melody) Broadcast(msg []byte) {
 	message := &envelope{t: websocket.TextMessage, msg: msg}
 	m.hub.broadcast <- message
 }
 
-// Broadcasts a message to all sessions that fn returns true for.
+// Broadcasts a text message to all sessions that fn returns true for.
 func (m *Melody) BroadcastFilter(msg []byte, fn func(*Session) bool) {
 	message := &envelope{t: websocket.TextMessage, msg: msg, filter: fn}
 	m.hub.broadcast <- message
 }
 
-// Broadcasts a message to all sessions except session s.
+// Broadcasts a text message to all sessions except session s.
 func (m *Melody) BroadcastOthers(msg []byte, s *Session) {
 	m.BroadcastFilter(msg, func(q *Session) bool {
+		return s != q
+	})
+}
+
+// Broadcasts a binary message to all sessions.
+func (m *Melody) BroadcastBinary(msg []byte) {
+	message := &envelope{t: websocket.BinaryMessage, msg: msg}
+	m.hub.broadcast <- message
+}
+
+// Broadcasts a binary message to all sessions that fn returns true for.
+func (m *Melody) BroadcastBinaryFilter(msg []byte, fn func(*Session) bool) {
+	message := &envelope{t: websocket.BinaryMessage, msg: msg, filter: fn}
+	m.hub.broadcast <- message
+}
+
+// Broadcasts a binary message to all sessions except session s.
+func (m *Melody) BroadcastBinaryOthers(msg []byte, s *Session) {
+	m.BroadcastBinaryFilter(msg, func(q *Session) bool {
 		return s != q
 	})
 }

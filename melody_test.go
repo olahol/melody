@@ -1,6 +1,7 @@
 package melody
 
 import (
+	"bytes"
 	"github.com/gorilla/websocket"
 	"net/http"
 	"net/http/httptest"
@@ -212,6 +213,56 @@ func TestBroadcast(t *testing.T) {
 	}
 }
 
+func TestBroadcastBinary(t *testing.T) {
+	broadcast := NewTestServer()
+	broadcast.m.HandleMessageBinary(func(session *Session, msg []byte) {
+		broadcast.m.BroadcastBinary(msg)
+	})
+	server := httptest.NewServer(broadcast)
+	defer server.Close()
+
+	n := 10
+
+	fn := func(msg []byte) bool {
+		conn, _ := NewDialer(server.URL)
+		defer conn.Close()
+
+		listeners := make([]*websocket.Conn, n)
+		for i := 0; i < n; i++ {
+			listener, _ := NewDialer(server.URL)
+			listeners[i] = listener
+			defer listeners[i].Close()
+		}
+
+		conn.WriteMessage(websocket.BinaryMessage, []byte(msg))
+
+		for i := 0; i < n; i++ {
+			messageType, ret, err := listeners[i].ReadMessage()
+
+			if err != nil {
+				t.Error(err)
+				return false
+			}
+
+			if messageType != websocket.BinaryMessage {
+				t.Errorf("message type should be BinaryMessage")
+				return false
+			}
+
+			if !bytes.Equal(msg, ret) {
+				t.Errorf("%v should equal %v", msg, ret)
+				return false
+			}
+		}
+
+		return true
+	}
+
+	if !fn([]byte{2, 3, 5, 7, 11}) {
+		t.Errorf("should not be false")
+	}
+}
+
 func TestBroadcastOthers(t *testing.T) {
 	broadcast := NewTestServer()
 	broadcast.m.HandleMessage(func(session *Session, msg []byte) {
@@ -255,6 +306,58 @@ func TestBroadcastOthers(t *testing.T) {
 	}
 
 	if !fn("test") {
+		t.Errorf("should not be false")
+	}
+}
+
+func TestBroadcastBinaryOthers(t *testing.T) {
+	broadcast := NewTestServer()
+	broadcast.m.HandleMessageBinary(func(session *Session, msg []byte) {
+		broadcast.m.BroadcastBinaryOthers(msg, session)
+	})
+	broadcast.m.Config.PongWait = time.Second
+	broadcast.m.Config.PingPeriod = time.Second * 9 / 10
+	server := httptest.NewServer(broadcast)
+	defer server.Close()
+
+	n := 10
+
+	fn := func(msg []byte) bool {
+		conn, _ := NewDialer(server.URL)
+		defer conn.Close()
+
+		listeners := make([]*websocket.Conn, n)
+		for i := 0; i < n; i++ {
+			listener, _ := NewDialer(server.URL)
+			listeners[i] = listener
+			defer listeners[i].Close()
+		}
+
+		conn.WriteMessage(websocket.BinaryMessage, []byte(msg))
+
+		for i := 0; i < n; i++ {
+			messageType, ret, err := listeners[i].ReadMessage()
+
+			if err != nil {
+				t.Error(err)
+				return false
+			}
+
+			if messageType != websocket.BinaryMessage {
+				t.Errorf("message type should be BinaryMessage")
+				return false
+			}
+
+			if !bytes.Equal(msg, ret) {
+				t.Errorf("%v should equal %v", msg, ret)
+				return false
+			}
+		}
+
+		return true
+	}
+
+	if !fn([]byte{2, 3, 5, 7, 11}) {
 		t.Errorf("should not be false")
 	}
 }
@@ -322,6 +425,52 @@ func TestBroadcastFilter(t *testing.T) {
 	}
 
 	if !fn("test") {
+		t.Errorf("should not be false")
+	}
+}
+
+func TestBroadcastBinaryFilter(t *testing.T) {
+	broadcast := NewTestServer()
+	broadcast.m.HandleMessageBinary(func(session *Session, msg []byte) {
+		broadcast.m.BroadcastBinaryFilter(msg, func(q *Session) bool {
+			return session == q
+		})
+	})
+	server := httptest.NewServer(broadcast)
+	defer server.Close()
+
+	fn := func(msg []byte) bool {
+		conn, err := NewDialer(server.URL)
+		defer conn.Close()
+
+		if err != nil {
+			t.Error(err)
+			return false
+		}
+
+		conn.WriteMessage(websocket.BinaryMessage, []byte(msg))
+
+		messageType, ret, err := conn.ReadMessage()
+
+		if err != nil {
+			t.Error(err)
+			return false
+		}
+
+		if messageType != websocket.BinaryMessage {
+			t.Errorf("message type should be BinaryMessage")
+			return false
+		}
+
+		if !bytes.Equal(msg, ret) {
+			t.Errorf("%v should equal %v", msg, ret)
+			return false
+		}
+
+		return true
+	}
+
+	if !fn([]byte{2, 3, 5, 7, 11}) {
 		t.Errorf("should not be false")
 	}
 }
