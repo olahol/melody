@@ -67,6 +67,10 @@ func main() {
 
 ## [Documentation](https://godoc.org/github.com/olahol/melody)
 
+## Contributors
+
+* Ola Holmström (@olahol)
+* Shogo Iwano (@shiwano)
 
 ## FAQ
 
