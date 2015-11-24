@@ -47,7 +47,7 @@ func (s *Session) close() {
 }
 
 func (s *Session) ping() {
-	s.writeMessage(&envelope{t: websocket.PingMessage, msg: []byte{}})
+	s.writeRaw(&envelope{t: websocket.PingMessage, msg: []byte{}})
 }
 
 func (s *Session) writePump() {
