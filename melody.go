@@ -80,6 +80,7 @@ func (m *Melody) HandleRequest(w http.ResponseWriter, r *http.Request) {
 
 	session := &Session{
 		Request: r,
+		params:  make(map[string]string),
 		conn:    conn,
 		output:  make(chan *envelope, m.Config.MessageBufferSize),
 		melody:  m,

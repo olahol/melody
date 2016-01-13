@@ -10,6 +10,7 @@ import (
 // A melody session.
 type Session struct {
 	Request *http.Request
+	params  map[string]string
 	conn    *websocket.Conn
 	output  chan *envelope
 	melody  *Melody
@@ -116,4 +117,14 @@ func (s *Session) WriteBinary(msg []byte) {
 // Close session.
 func (s *Session) Close() {
 	s.writeMessage(&envelope{t: websocket.CloseMessage, msg: []byte{}})
+}
+
+// Set session param
+func (s *Session) SetParam(key string, value string) {
+	s.params[key] = value
+}
+
+// Get session param
+func (s *Session) GetParam(key string) string {
+	return s.params[key]
 }
