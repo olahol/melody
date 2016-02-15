@@ -88,7 +88,7 @@ func (m *Melody) HandleRequest(w http.ResponseWriter, r *http.Request) {
 
 	m.hub.register <- session
 
-	go m.connectHandler(session)
+	m.connectHandler(session)
 
 	go session.writePump()
 
