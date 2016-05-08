@@ -74,14 +74,20 @@ loop:
 	}
 }
 
+func (s *Session) SetPongHandler(f func() error) {
+	s.conn.SetPongHandler(func(string) error {
+		s.conn.SetReadDeadline(time.Now().Add(s.melody.Config.PongWait))
+		return f()
+	})
+}
+
 func (s *Session) readPump() {
 	defer s.conn.Close()
 
 	s.conn.SetReadLimit(s.melody.Config.MaxMessageSize)
 	s.conn.SetReadDeadline(time.Now().Add(s.melody.Config.PongWait))
 
-	s.conn.SetPongHandler(func(string) error {
-		s.conn.SetReadDeadline(time.Now().Add(s.melody.Config.PongWait))
+	s.SetPongHandler(func() error {
 		return nil
 	})
 
