@@ -4,6 +4,7 @@ import (
 	"errors"
 	"github.com/gorilla/websocket"
 	"net/http"
+	"sync"
 	"time"
 )
 
@@ -11,6 +12,7 @@ import (
 type Session struct {
 	Request *http.Request
 	conn    *websocket.Conn
+	mutex   sync.Mutex
 	output  chan *envelope
 	melody  *Melody
 }
@@ -75,10 +77,14 @@ loop:
 }
 
 func (s *Session) SetPongHandler(f func() error) {
-	s.conn.SetPongHandler(func(string) error {
-		s.conn.SetReadDeadline(time.Now().Add(s.melody.Config.PongWait))
-		return f()
-	})
+	s.mutex.Lock()
+	{
+		s.conn.SetPongHandler(func(string) error {
+			s.conn.SetReadDeadline(time.Now().Add(s.melody.Config.PongWait))
+			return f()
+		})
+	}
+	s.mutex.Unlock()
 }
 
 func (s *Session) readPump() {
@@ -87,9 +93,14 @@ func (s *Session) readPump() {
 	s.conn.SetReadLimit(s.melody.Config.MaxMessageSize)
 	s.conn.SetReadDeadline(time.Now().Add(s.melody.Config.PongWait))
 
-	s.SetPongHandler(func() error {
-		return nil
-	})
+	s.mutex.Lock()
+	{
+		s.conn.SetPongHandler(func(string) error {
+			s.conn.SetReadDeadline(time.Now().Add(s.melody.Config.PongWait))
+			return nil
+		})
+	}
+	s.mutex.Unlock()
 
 	for {
 		t, message, err := s.conn.ReadMessage()
