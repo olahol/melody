@@ -71,6 +71,7 @@ func main() {
 
 * Ola Holmström (@olahol)
 * Shogo Iwano (@shiwano)
+* Matt Caldwell (@mattcaldwell)
 
 ## FAQ
 

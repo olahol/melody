@@ -1,3 +1,7 @@
+## 2016-05-09
+
+* Add method `HandlePong` to melody instance.
+
 ## 2015-10-07
 
 * Add broadcast methods for binary messages.

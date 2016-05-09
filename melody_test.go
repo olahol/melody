@@ -512,3 +512,33 @@ func TestSmallMessageBuffer(t *testing.T) {
 
 	conn.WriteMessage(websocket.TextMessage, []byte("12345"))
 }
+
+func TestPong(t *testing.T) {
+	echo := NewTestServerHandler(func(session *Session, msg []byte) {
+		session.Write(msg)
+	})
+	echo.m.Config.PongWait = time.Second
+	echo.m.Config.PingPeriod = time.Second * 9 / 10
+	server := httptest.NewServer(echo)
+	defer server.Close()
+
+	conn, err := NewDialer(server.URL)
+	defer conn.Close()
+
+	if err != nil {
+		t.Error(err)
+	}
+
+	fired := false
+	echo.m.HandlePong(func(s *Session) {
+		fired = true
+	})
+
+	conn.WriteMessage(websocket.PongMessage, nil)
+
+	time.Sleep(time.Millisecond)
+
+	if !fired {
+		t.Error("should have fired pong handler")
+	}
+}

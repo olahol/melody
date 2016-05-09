@@ -3,6 +3,7 @@ sudo: required
 go:
 - 1.4
 - 1.5
+- 1.6
 before_install:
   - go get github.com/axw/gocov/gocov
   - go get github.com/mattn/goveralls

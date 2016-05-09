@@ -18,6 +18,7 @@ type Melody struct {
 	errorHandler         handleErrorFunc
 	connectHandler       handleSessionFunc
 	disconnectHandler    handleSessionFunc
+	pongHandler          handleSessionFunc
 	hub                  *hub
 }
 
@@ -40,6 +41,7 @@ func New() *Melody {
 		errorHandler:         func(*Session, error) {},
 		connectHandler:       func(*Session) {},
 		disconnectHandler:    func(*Session) {},
+		pongHandler:          func(*Session) {},
 		hub:                  hub,
 	}
 }
@@ -52,6 +54,11 @@ func (m *Melody) HandleConnect(fn func(*Session)) {
 // Fires fn when a session disconnects.
 func (m *Melody) HandleDisconnect(fn func(*Session)) {
 	m.disconnectHandler = fn
+}
+
+// Fires fn when a pong is received from a session.
+func (m *Melody) HandlePong(fn func(*Session)) {
+	m.pongHandler = fn
 }
 
 // Callback when a text message comes in.
