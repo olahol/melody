@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-// A melody session.
+// Session is wrapper around websocket connections.
 type Session struct {
 	Request *http.Request
 	conn    *websocket.Conn
@@ -104,17 +104,17 @@ func (s *Session) readPump() {
 	}
 }
 
-// Write message to session.
+// Write writes message to session.
 func (s *Session) Write(msg []byte) {
 	s.writeMessage(&envelope{t: websocket.TextMessage, msg: msg})
 }
 
-// Write binary message to session.
+// WriteBinary writes a binary message to session.
 func (s *Session) WriteBinary(msg []byte) {
 	s.writeMessage(&envelope{t: websocket.BinaryMessage, msg: msg})
 }
 
-// Close session.
+// Close closes a session.
 func (s *Session) Close() {
 	s.writeMessage(&envelope{t: websocket.CloseMessage, msg: []byte{}})
 }

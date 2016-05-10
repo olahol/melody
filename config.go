@@ -2,7 +2,7 @@ package melody
 
 import "time"
 
-// Melody configuration.
+// Config melody configuration struct.
 type Config struct {
 	WriteWait         time.Duration // Milliseconds until write times out.
 	PongWait          time.Duration // Timeout for waiting on pong.
