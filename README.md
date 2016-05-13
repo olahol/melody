@@ -25,6 +25,7 @@ go get github.com/olahol/melody
 
 [![Chat](https://cdn.rawgit.com/olahol/melody/master/examples/chat/demo.gif "Demo")](https://github.com/olahol/melody/tree/master/examples/chat)
 
+Using [Gin](https://github.com/gin-gonic/gin):
 ```go
 package main
 
@@ -51,6 +52,43 @@ func main() {
 	})
 
 	r.Run(":5000")
+}
+```
+
+Using [Echo](https://github.com/labstack/echo):
+```go
+package main
+
+import (
+	"github.com/labstack/echo"
+	"github.com/labstack/echo/engine/standard"
+	"github.com/labstack/echo/middleware"
+	"github.com/olahol/melody"
+	"net/http"
+)
+
+func main() {
+	e := echo.New()
+	m := melody.New()
+
+	e.Use(middleware.Logger())
+	e.Use(middleware.Recover())
+
+	e.GET("/", func(c echo.Context) error {
+		http.ServeFile(c.Response().(*standard.Response).ResponseWriter, c.Request().(*standard.Request).Request, "index.html")
+		return nil
+	})
+
+	e.GET("/ws", func(c echo.Context) error {
+		m.HandleRequest(c.Response().(*standard.Response).ResponseWriter, c.Request().(*standard.Request).Request)
+		return nil
+	})
+
+	m.HandleMessage(func(s *melody.Session, msg []byte) {
+		m.Broadcast(msg)
+	})
+
+	e.Run(standard.New(":5000"))
 }
 ```
 
