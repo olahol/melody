@@ -1,0 +1,70 @@
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>goofy gophers</title>
+  <style>
+  body {
+    cursor: none;
+    overflow: hidden;
+  }
+  .gopher {
+    background-image: url('https://upload.wikimedia.org/wikipedia/commons/thumb/6/6f/Go_gopher_mascot_bw.png/768px-Go_gopher_mascot_bw.png');
+    width: 95px;
+    height: 95px;
+    background-size: cover;
+    position: absolute;
+    left: 0px;
+    top: 0px;
+  }
+  </style>
+  </head>
+  <body>
+    <script>
+      var url = "ws://" + window.location.host + "/ws";
+      var ws = new WebSocket(url);
+      var myid = -1;
+
+      ws.onmessage = function (msg) {
+        var cmds = {"iam": iam, "set": set, "dis": dis};
+        if (msg.data) {
+          var parts = msg.data.split(" ")
+          var cmd = cmds[parts[0]];
+          if (cmd) {
+            cmd.apply(null, parts.slice(1));
+          }
+        }
+      };
+
+      function iam(id) {
+        myid = id;
+      }
+
+      function set(id, x, y) {
+        var node = document.getElementById("gopher-" + id);
+        if (!node) {
+          node = document.createElement("div");
+          document.body.appendChild(node);
+          node.className = "gopher";
+          node.style.zIndex = id + 1;
+          node.id = "gopher-" + id;
+        }
+        node.style.left = x + "px";
+        node.style.top = y + "px";
+      }
+
+      function dis(id) {
+        var node = document.getElementById("gopher-" + id);
+        if (node) {
+          document.body.removeChild(node);
+        }
+      }
+
+      window.onmousemove = function (e) {
+        if (myid > -1) {
+          set(myid, e.pageX, e.pageY);
+          ws.send([e.pageX, e.pageY].join(" "));
+        }
+      }
+    </script>
+  </body>
+</html>

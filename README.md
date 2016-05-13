@@ -21,19 +21,16 @@ your way so you can write real-time apps. Features include:
 go get github.com/olahol/melody
 ```
 
-## [Example](https://github.com/olahol/melody/tree/master/examples)
+## [Example: chat](https://github.com/olahol/melody/tree/master/examples/chat)
 
-[Multi channel chat server](https://github.com/olahol/melody/tree/master/examples/multichat),
-error handling left as en exercise for the developer.
-
-[![Chat demo](https://cdn.rawgit.com/olahol/melody/master/examples/chat/demo.gif "Demo")](https://github.com/olahol/melody/tree/master/examples/multichat)
+[![Chat](https://cdn.rawgit.com/olahol/melody/master/examples/chat/demo.gif "Demo")](https://github.com/olahol/melody/tree/master/examples/chat)
 
 ```go
 package main
 
 import (
-	"github.com/olahol/melody"
 	"github.com/gin-gonic/gin"
+	"github.com/olahol/melody"
 	"net/http"
 )
 
@@ -45,21 +42,84 @@ func main() {
 		http.ServeFile(c.Writer, c.Request, "index.html")
 	})
 
-	r.GET("/channel/:name", func(c *gin.Context) {
-		http.ServeFile(c.Writer, c.Request, "chan.html")
-	})
-
-	r.GET("/channel/:name/ws", func(c *gin.Context) {
+	r.GET("/ws", func(c *gin.Context) {
 		m.HandleRequest(c.Writer, c.Request)
 	})
 
 	m.HandleMessage(func(s *melody.Session, msg []byte) {
-		m.BroadcastFilter(msg, func(q *melody.Session) bool {
-			return q.Request.URL.Path == s.Request.URL.Path
-		})
+		m.Broadcast(msg)
 	})
 
 	r.Run(":5000")
+}
+```
+
+## [Example: gophers](https://github.com/olahol/melody/tree/master/examples/gophers)
+
+[![Gophers](https://cdn.rawgit.com/olahol/melody/master/examples/gophers/demo.gif "Demo")](https://github.com/olahol/melody/tree/master/examples/gophers)
+
+```go
+package main
+
+import (
+	"github.com/gin-gonic/gin"
+	"github.com/olahol/melody"
+	"net/http"
+	"strconv"
+	"strings"
+	"sync"
+)
+
+type GopherInfo struct {
+	ID, X, Y string
+}
+
+func main() {
+	router := gin.Default()
+	mrouter := melody.New()
+	gophers := make(map[*melody.Session]*GopherInfo)
+	lock := new(sync.Mutex)
+	counter := 0
+
+	router.GET("/", func(c *gin.Context) {
+		http.ServeFile(c.Writer, c.Request, "index.html")
+	})
+
+	router.GET("/ws", func(c *gin.Context) {
+		mrouter.HandleRequest(c.Writer, c.Request)
+	})
+
+	mrouter.HandleConnect(func(s *melody.Session) {
+		lock.Lock()
+		for _, info := range gophers {
+			s.Write([]byte("set " + info.ID + " " + info.X + " " + info.Y))
+		}
+		gophers[s] = &GopherInfo{strconv.Itoa(counter), "0", "0"}
+		s.Write([]byte("iam " + gophers[s].ID))
+		counter += 1
+		lock.Unlock()
+	})
+
+	mrouter.HandleDisconnect(func(s *melody.Session) {
+		lock.Lock()
+		mrouter.BroadcastOthers([]byte("dis "+gophers[s].ID), s)
+		delete(gophers, s)
+		lock.Unlock()
+	})
+
+	mrouter.HandleMessage(func(s *melody.Session, msg []byte) {
+		p := strings.Split(string(msg), " ")
+		lock.Lock()
+		info := gophers[s]
+		if len(p) == 2 {
+			info.X = p[0]
+			info.Y = p[1]
+			mrouter.BroadcastOthers([]byte("set "+info.ID+" "+info.X+" "+info.Y), s)
+		}
+		lock.Unlock()
+	})
+
+	router.Run(":5000")
 }
 ```
 
