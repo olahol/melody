@@ -5,6 +5,7 @@ import (
 	"github.com/gorilla/websocket"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"strings"
 	"testing"
 	"testing/quick"
@@ -139,6 +140,58 @@ func TestHandlers(t *testing.T) {
 	})
 
 	NewDialer(server.URL)
+}
+
+func TestMetadata(t *testing.T) {
+	echo := NewTestServer()
+	echo.m.HandleConnect(func(session *Session) {
+		session.Set("stamp", time.Now().UnixNano())
+	})
+	echo.m.HandleMessage(func(session *Session, msg []byte) {
+		stamp := session.MustGet("stamp").(int64)
+		session.Write([]byte(strconv.Itoa(int(stamp))))
+	})
+	server := httptest.NewServer(echo)
+	defer server.Close()
+
+	fn := func(msg string) bool {
+		conn, err := NewDialer(server.URL)
+		defer conn.Close()
+
+		if err != nil {
+			t.Error(err)
+			return false
+		}
+
+		conn.WriteMessage(websocket.TextMessage, []byte(msg))
+
+		_, ret, err := conn.ReadMessage()
+
+		if err != nil {
+			t.Error(err)
+			return false
+		}
+
+		stamp, err := strconv.Atoi(string(ret))
+
+		if err != nil {
+			t.Error(err)
+			return false
+		}
+
+		diff := int(time.Now().UnixNano()) - stamp
+
+		if diff <= 0 {
+			t.Errorf("diff should be above 0 %d", diff)
+			return false
+		}
+
+		return true
+	}
+
+	if err := quick.Check(fn, nil); err != nil {
+		t.Error(err)
+	}
 }
 
 func TestUpgrader(t *testing.T) {

@@ -14,6 +14,7 @@ your way so you can write real-time apps. Features include:
 * [x] A simple way to broadcast to all or selected connected sessions.
 * [x] Message buffers making concurrent writing safe.
 * [x] Automatic handling of ping/pong and session timeouts.
+* [x] Store data on sessions.
 
 ## Install
 
@@ -170,6 +171,8 @@ func main() {
 * Ola Holmström (@olahol)
 * Shogo Iwano (@shiwano)
 * Matt Caldwell (@mattcaldwell)
+* Heikki Uljas (@huljas)
+* Robbie Trencheny (@robbiet480)
 
 ## FAQ
 

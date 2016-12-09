@@ -4,16 +4,18 @@ import (
 	"errors"
 	"github.com/gorilla/websocket"
 	"net/http"
+	"sync"
 	"time"
 )
 
 // Session is wrapper around websocket connections.
 type Session struct {
 	Request *http.Request
-	Params  map[string]interface{}
+	Keys    map[string]interface{}
 	conn    *websocket.Conn
 	output  chan *envelope
 	melody  *Melody
+	lock    *sync.Mutex
 }
 
 func (s *Session) writeMessage(message *envelope) {
@@ -118,4 +120,39 @@ func (s *Session) WriteBinary(msg []byte) {
 // Close closes a session.
 func (s *Session) Close() {
 	s.writeMessage(&envelope{t: websocket.CloseMessage, msg: []byte{}})
+}
+
+// Set is used to store a new key/value pair exclusivelly for this session.
+// It also lazy initializes s.Keys if it was not used previously.
+func (s *Session) Set(key string, value interface{}) {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+
+	if s.Keys == nil {
+		s.Keys = make(map[string]interface{})
+	}
+
+	s.Keys[key] = value
+}
+
+// Get returns the value for the given key, ie: (value, true).
+// If the value does not exists it returns (nil, false)
+func (s *Session) Get(key string) (value interface{}, exists bool) {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+
+	if s.Keys != nil {
+		value, exists = s.Keys[key]
+	}
+
+	return
+}
+
+// MustGet returns the value for the given key if it exists, otherwise it panics.
+func (s *Session) MustGet(key string) interface{} {
+	if value, exists := s.Get(key); exists {
+		return value
+	}
+
+	panic("Key \"" + key + "\" does not exist")
 }

@@ -1,3 +1,7 @@
+## 2016-12-09
+
+* Add metadata management for sessions.
+
 ## 2016-05-09
 
 * Add method `HandlePong` to melody instance.

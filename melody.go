@@ -3,6 +3,7 @@ package melody
 import (
 	"github.com/gorilla/websocket"
 	"net/http"
+	"sync"
 )
 
 type handleMessageFunc func(*Session, []byte)
@@ -88,10 +89,11 @@ func (m *Melody) HandleRequest(w http.ResponseWriter, r *http.Request) {
 
 	session := &Session{
 		Request: r,
-		Params:  make(map[string]interface{}),
+		Keys:    nil,
 		conn:    conn,
 		output:  make(chan *envelope, m.Config.MessageBufferSize),
 		melody:  m,
+		lock:    &sync.Mutex{},
 	}
 
 	m.hub.register <- session
