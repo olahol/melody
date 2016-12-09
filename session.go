@@ -10,6 +10,7 @@ import (
 // Session is wrapper around websocket connections.
 type Session struct {
 	Request *http.Request
+	Params  map[string]interface{}
 	conn    *websocket.Conn
 	output  chan *envelope
 	melody  *Melody
