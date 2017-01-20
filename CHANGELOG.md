@@ -1,3 +1,7 @@
+## 2017-01-20
+
+* Add `Len()` to fetch number of connected sessions.
+
 ## 2016-12-09
 
 * Add metadata management for sessions.

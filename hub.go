@@ -1,5 +1,9 @@
 package melody
 
+import (
+	"sync"
+)
+
 type hub struct {
 	sessions   map[*Session]bool
 	broadcast  chan *envelope
@@ -7,6 +11,7 @@ type hub struct {
 	unregister chan *Session
 	exit       chan bool
 	open       bool
+	rwmutex    *sync.RWMutex
 }
 
 func newHub() *hub {
@@ -17,6 +22,7 @@ func newHub() *hub {
 		unregister: make(chan *Session),
 		exit:       make(chan bool),
 		open:       true,
+		rwmutex:    &sync.RWMutex{},
 	}
 }
 
@@ -25,14 +31,19 @@ loop:
 	for {
 		select {
 		case s := <-h.register:
+			h.rwmutex.Lock()
 			h.sessions[s] = true
+			h.rwmutex.Unlock()
 		case s := <-h.unregister:
 			if _, ok := h.sessions[s]; ok {
+				h.rwmutex.Lock()
 				delete(h.sessions, s)
 				s.conn.Close()
 				close(s.output)
+				h.rwmutex.Unlock()
 			}
 		case m := <-h.broadcast:
+			h.rwmutex.RLock()
 			for s := range h.sessions {
 				if m.filter != nil {
 					if m.filter(s) {
@@ -42,14 +53,24 @@ loop:
 					s.writeMessage(m)
 				}
 			}
+			h.rwmutex.RUnlock()
 		case <-h.exit:
+			h.rwmutex.Lock()
 			for s := range h.sessions {
 				delete(h.sessions, s)
 				s.conn.Close()
 				close(s.output)
 			}
 			h.open = false
+			h.rwmutex.Unlock()
 			break loop
 		}
 	}
+}
+
+func (h *hub) len() int {
+	h.rwmutex.RLock()
+	defer h.rwmutex.RUnlock()
+
+	return len(h.sessions)
 }

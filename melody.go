@@ -153,3 +153,8 @@ func (m *Melody) BroadcastBinaryOthers(msg []byte, s *Session) {
 func (m *Melody) Close() {
 	m.hub.exit <- true
 }
+
+// Len return the number of connected sessions.
+func (m *Melody) Len() int {
+	return m.hub.len()
+}

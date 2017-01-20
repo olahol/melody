@@ -3,6 +3,7 @@ package melody
 import (
 	"bytes"
 	"github.com/gorilla/websocket"
+	"math/rand"
 	"net/http"
 	"net/http/httptest"
 	"strconv"
@@ -76,6 +77,51 @@ func TestEcho(t *testing.T) {
 
 	if err := quick.Check(fn, nil); err != nil {
 		t.Error(err)
+	}
+}
+
+func TestLen(t *testing.T) {
+	rand.Seed(time.Now().UnixNano())
+
+	connect := int(rand.Int31n(1000))
+	disconnect := rand.Float32()
+	conns := make([]*websocket.Conn, connect)
+	defer func() {
+		for _, conn := range conns {
+			if conn != nil {
+				conn.Close()
+			}
+		}
+	}()
+
+	echo := NewTestServerHandler(func(session *Session, msg []byte) {})
+	server := httptest.NewServer(echo)
+	defer server.Close()
+
+	disconnected := 0
+	for i := 0; i < connect; i++ {
+		conn, err := NewDialer(server.URL)
+
+		if err != nil {
+			t.Error(err)
+		}
+
+		if rand.Float32() < disconnect {
+			conns[i] = nil
+			disconnected += 1
+			conn.Close()
+			continue
+		}
+
+		conns[i] = conn
+	}
+
+	time.Sleep(time.Millisecond)
+
+	connected := connect - disconnected
+
+	if echo.m.Len() != connected {
+		t.Errorf("melody len %d should equal %d", echo.m.Len(), connected)
 	}
 }
 
