@@ -1,9 +1,10 @@
 package melody
 
 import (
-	"github.com/gorilla/websocket"
 	"net/http"
 	"sync"
+
+	"github.com/gorilla/websocket"
 )
 
 type handleMessageFunc func(*Session, []byte)
@@ -17,6 +18,7 @@ type Melody struct {
 	Upgrader             *websocket.Upgrader
 	messageHandler       handleMessageFunc
 	messageHandlerBinary handleMessageFunc
+	messageSentHandler   handleMessageFunc
 	errorHandler         handleErrorFunc
 	connectHandler       handleSessionFunc
 	disconnectHandler    handleSessionFunc
@@ -40,6 +42,7 @@ func New() *Melody {
 		Upgrader:             upgrader,
 		messageHandler:       func(*Session, []byte) {},
 		messageHandlerBinary: func(*Session, []byte) {},
+		messageSentHandler:   func(*Session, []byte) {},
 		errorHandler:         func(*Session, error) {},
 		connectHandler:       func(*Session) {},
 		disconnectHandler:    func(*Session) {},
@@ -71,6 +74,11 @@ func (m *Melody) HandleMessage(fn func(*Session, []byte)) {
 // HandleMessageBinary fires fn when a binary message comes in.
 func (m *Melody) HandleMessageBinary(fn func(*Session, []byte)) {
 	m.messageHandlerBinary = fn
+}
+
+// HandleSentMessage fires fn when a message is successfully sent.
+func (m *Melody) HandleSentMessage(fn func(*Session, []byte)) {
+	m.messageSentHandler = fn
 }
 
 // HandleError fires fn when a session has an error.

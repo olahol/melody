@@ -2,10 +2,11 @@ package melody
 
 import (
 	"errors"
-	"github.com/gorilla/websocket"
 	"net/http"
 	"sync"
 	"time"
+
+	"github.com/gorilla/websocket"
 )
 
 // Session is wrapper around websocket connections.
@@ -71,6 +72,7 @@ loop:
 				s.melody.errorHandler(s, err)
 				break loop
 			}
+			s.melody.messageSentHandler(s, msg.msg)
 		case <-ticker.C:
 			s.ping()
 		}
