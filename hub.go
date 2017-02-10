@@ -38,8 +38,6 @@ loop:
 			if _, ok := h.sessions[s]; ok {
 				h.rwmutex.Lock()
 				delete(h.sessions, s)
-				s.conn.Close()
-				close(s.output)
 				h.rwmutex.Unlock()
 			}
 		case m := <-h.broadcast:
@@ -58,14 +56,19 @@ loop:
 			h.rwmutex.Lock()
 			for s := range h.sessions {
 				delete(h.sessions, s)
-				s.conn.Close()
-				close(s.output)
+				s.Close()
 			}
 			h.open = false
 			h.rwmutex.Unlock()
 			break loop
 		}
 	}
+}
+
+func (h *hub) closed() bool {
+	h.rwmutex.RLock()
+	defer h.rwmutex.RUnlock()
+	return !h.open
 }
 
 func (h *hub) len() int {

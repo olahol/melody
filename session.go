@@ -8,25 +8,35 @@ import (
 	"time"
 )
 
-// Session is wrapper around websocket connections.
+// Session wrapper around websocket connections.
 type Session struct {
 	Request *http.Request
 	Keys    map[string]interface{}
 	conn    *websocket.Conn
 	output  chan *envelope
 	melody  *Melody
-	lock    *sync.Mutex
+	open    bool
+	rwmutex *sync.RWMutex
 }
 
 func (s *Session) writeMessage(message *envelope) {
+	if s.closed() {
+		s.melody.errorHandler(s, errors.New("Tried to write to closed a session."))
+		return
+	}
+
 	select {
 	case s.output <- message:
 	default:
-		s.melody.errorHandler(s, errors.New("Message buffer full"))
+		s.melody.errorHandler(s, errors.New("Session message buffer is full."))
 	}
 }
 
 func (s *Session) writeRaw(message *envelope) error {
+	if s.closed() {
+		return errors.New("Trie to write to a closed session.")
+	}
+
 	s.conn.SetWriteDeadline(time.Now().Add(s.melody.Config.WriteWait))
 	err := s.conn.WriteMessage(message.t, message.msg)
 
@@ -34,19 +44,24 @@ func (s *Session) writeRaw(message *envelope) error {
 		return err
 	}
 
-	if message.t == websocket.CloseMessage {
-		err := s.conn.Close()
-
-		if err != nil {
-			return err
-		}
-	}
-
 	return nil
 }
 
+func (s *Session) closed() bool {
+	s.rwmutex.RLock()
+	defer s.rwmutex.RUnlock()
+
+	return !s.open
+}
+
 func (s *Session) close() {
-	s.writeRaw(&envelope{t: websocket.CloseMessage, msg: []byte{}})
+	if !s.closed() {
+		s.rwmutex.Lock()
+		s.open = false
+		s.conn.Close()
+		close(s.output)
+		s.rwmutex.Unlock()
+	}
 }
 
 func (s *Session) ping() {
@@ -54,8 +69,6 @@ func (s *Session) ping() {
 }
 
 func (s *Session) writePump() {
-	defer s.conn.Close()
-
 	ticker := time.NewTicker(s.melody.Config.PingPeriod)
 	defer ticker.Stop()
 
@@ -64,13 +77,20 @@ loop:
 		select {
 		case msg, ok := <-s.output:
 			if !ok {
-				s.close()
 				break loop
 			}
-			if err := s.writeRaw(msg); err != nil {
+
+			err := s.writeRaw(msg)
+
+			if err != nil {
 				s.melody.errorHandler(s, err)
 				break loop
 			}
+
+			if msg.t == websocket.CloseMessage {
+				break loop
+			}
+
 		case <-ticker.C:
 			s.ping()
 		}
@@ -78,8 +98,6 @@ loop:
 }
 
 func (s *Session) readPump() {
-	defer s.conn.Close()
-
 	s.conn.SetReadLimit(s.melody.Config.MaxMessageSize)
 	s.conn.SetReadDeadline(time.Now().Add(s.melody.Config.PongWait))
 
@@ -108,26 +126,41 @@ func (s *Session) readPump() {
 }
 
 // Write writes message to session.
-func (s *Session) Write(msg []byte) {
+func (s *Session) Write(msg []byte) error {
+	if s.closed() {
+		return errors.New("Session is closed.")
+	}
+
 	s.writeMessage(&envelope{t: websocket.TextMessage, msg: msg})
+
+	return nil
 }
 
 // WriteBinary writes a binary message to session.
-func (s *Session) WriteBinary(msg []byte) {
+func (s *Session) WriteBinary(msg []byte) error {
+	if s.closed() {
+		return errors.New("Session is closed.")
+	}
+
 	s.writeMessage(&envelope{t: websocket.BinaryMessage, msg: msg})
+
+	return nil
 }
 
-// Close closes a session.
-func (s *Session) Close() {
+// Close closes session.
+func (s *Session) Close() error {
+	if s.closed() {
+		return errors.New("Session is already closed.")
+	}
+
 	s.writeMessage(&envelope{t: websocket.CloseMessage, msg: []byte{}})
+
+	return nil
 }
 
 // Set is used to store a new key/value pair exclusivelly for this session.
 // It also lazy initializes s.Keys if it was not used previously.
 func (s *Session) Set(key string, value interface{}) {
-	s.lock.Lock()
-	defer s.lock.Unlock()
-
 	if s.Keys == nil {
 		s.Keys = make(map[string]interface{})
 	}
@@ -138,9 +171,6 @@ func (s *Session) Set(key string, value interface{}) {
 // Get returns the value for the given key, ie: (value, true).
 // If the value does not exists it returns (nil, false)
 func (s *Session) Get(key string) (value interface{}, exists bool) {
-	s.lock.Lock()
-	defer s.lock.Unlock()
-
 	if s.Keys != nil {
 		value, exists = s.Keys[key]
 	}

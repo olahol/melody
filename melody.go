@@ -1,6 +1,7 @@
 package melody
 
 import (
+	"errors"
 	"github.com/gorilla/websocket"
 	"net/http"
 	"sync"
@@ -79,12 +80,15 @@ func (m *Melody) HandleError(fn func(*Session, error)) {
 }
 
 // HandleRequest upgrades http requests to websocket connections and dispatches them to be handled by the melody instance.
-func (m *Melody) HandleRequest(w http.ResponseWriter, r *http.Request) {
+func (m *Melody) HandleRequest(w http.ResponseWriter, r *http.Request) error {
+	if m.hub.closed() {
+		return errors.New("Melody instance is closed.")
+	}
+
 	conn, err := m.Upgrader.Upgrade(w, r, nil)
 
 	if err != nil {
-		m.errorHandler(nil, err)
-		return
+		return err
 	}
 
 	session := &Session{
@@ -93,7 +97,8 @@ func (m *Melody) HandleRequest(w http.ResponseWriter, r *http.Request) {
 		conn:    conn,
 		output:  make(chan *envelope, m.Config.MessageBufferSize),
 		melody:  m,
-		lock:    &sync.Mutex{},
+		open:    true,
+		rwmutex: &sync.RWMutex{},
 	}
 
 	m.hub.register <- session
@@ -104,54 +109,88 @@ func (m *Melody) HandleRequest(w http.ResponseWriter, r *http.Request) {
 
 	session.readPump()
 
-	if m.hub.open {
+	if !m.hub.closed() {
 		m.hub.unregister <- session
 	}
 
-	go m.disconnectHandler(session)
+	session.close()
+
+	m.disconnectHandler(session)
+
+	return nil
 }
 
 // Broadcast broadcasts a text message to all sessions.
-func (m *Melody) Broadcast(msg []byte) {
+func (m *Melody) Broadcast(msg []byte) error {
+	if m.hub.closed() {
+		return errors.New("Melody instance is closed.")
+	}
+
 	message := &envelope{t: websocket.TextMessage, msg: msg}
 	m.hub.broadcast <- message
+
+	return nil
 }
 
 // BroadcastFilter broadcasts a text message to all sessions that fn returns true for.
-func (m *Melody) BroadcastFilter(msg []byte, fn func(*Session) bool) {
+func (m *Melody) BroadcastFilter(msg []byte, fn func(*Session) bool) error {
+	if m.hub.closed() {
+		return errors.New("Melody instance is closed.")
+	}
+
 	message := &envelope{t: websocket.TextMessage, msg: msg, filter: fn}
 	m.hub.broadcast <- message
+
+	return nil
 }
 
 // BroadcastOthers broadcasts a text message to all sessions except session s.
-func (m *Melody) BroadcastOthers(msg []byte, s *Session) {
-	m.BroadcastFilter(msg, func(q *Session) bool {
+func (m *Melody) BroadcastOthers(msg []byte, s *Session) error {
+	return m.BroadcastFilter(msg, func(q *Session) bool {
 		return s != q
 	})
 }
 
 // BroadcastBinary broadcasts a binary message to all sessions.
-func (m *Melody) BroadcastBinary(msg []byte) {
+func (m *Melody) BroadcastBinary(msg []byte) error {
+	if m.hub.closed() {
+		return errors.New("Melody instance is closed.")
+	}
+
 	message := &envelope{t: websocket.BinaryMessage, msg: msg}
 	m.hub.broadcast <- message
+
+	return nil
 }
 
 // BroadcastBinaryFilter broadcasts a binary message to all sessions that fn returns true for.
-func (m *Melody) BroadcastBinaryFilter(msg []byte, fn func(*Session) bool) {
+func (m *Melody) BroadcastBinaryFilter(msg []byte, fn func(*Session) bool) error {
+	if m.hub.closed() {
+		return errors.New("Melody instance is closed.")
+	}
+
 	message := &envelope{t: websocket.BinaryMessage, msg: msg, filter: fn}
 	m.hub.broadcast <- message
+
+	return nil
 }
 
 // BroadcastBinaryOthers broadcasts a binary message to all sessions except session s.
-func (m *Melody) BroadcastBinaryOthers(msg []byte, s *Session) {
-	m.BroadcastBinaryFilter(msg, func(q *Session) bool {
+func (m *Melody) BroadcastBinaryOthers(msg []byte, s *Session) error {
+	return m.BroadcastBinaryFilter(msg, func(q *Session) bool {
 		return s != q
 	})
 }
 
 // Close closes the melody instance and all connected sessions.
-func (m *Melody) Close() {
+func (m *Melody) Close() error {
+	if m.hub.closed() {
+		return errors.New("Melody instance is already closed.")
+	}
+
 	m.hub.exit <- true
+
+	return nil
 }
 
 // Len return the number of connected sessions.

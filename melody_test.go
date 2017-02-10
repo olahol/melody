@@ -80,6 +80,43 @@ func TestEcho(t *testing.T) {
 	}
 }
 
+func TestWriteClosed(t *testing.T) {
+	echo := NewTestServerHandler(func(session *Session, msg []byte) {
+		session.Write(msg)
+	})
+	server := httptest.NewServer(echo)
+	defer server.Close()
+
+	fn := func(msg string) bool {
+		conn, err := NewDialer(server.URL)
+
+		if err != nil {
+			t.Error(err)
+			return false
+		}
+
+		conn.WriteMessage(websocket.TextMessage, []byte(msg))
+
+		echo.m.HandleConnect(func(s *Session) {
+			s.Close()
+		})
+
+		echo.m.HandleDisconnect(func(s *Session) {
+			err := s.Write([]byte("hello world"))
+
+			if err == nil {
+				t.Error("should be an error")
+			}
+		})
+
+		return true
+	}
+
+	if err := quick.Check(fn, nil); err != nil {
+		t.Error(err)
+	}
+}
+
 func TestLen(t *testing.T) {
 	rand.Seed(time.Now().UnixNano())
 
@@ -639,5 +676,49 @@ func TestPong(t *testing.T) {
 
 	if !fired {
 		t.Error("should have fired pong handler")
+	}
+}
+
+func BenchmarkSessionWrite(b *testing.B) {
+	echo := NewTestServerHandler(func(session *Session, msg []byte) {
+		session.Write(msg)
+	})
+	server := httptest.NewServer(echo)
+	conn, _ := NewDialer(server.URL)
+	defer server.Close()
+	defer conn.Close()
+
+	for n := 0; n < b.N; n++ {
+		conn.WriteMessage(websocket.TextMessage, []byte("test"))
+		conn.ReadMessage()
+	}
+}
+
+func BenchmarkBroadcast(b *testing.B) {
+	echo := NewTestServerHandler(func(session *Session, msg []byte) {
+		session.Write(msg)
+	})
+	server := httptest.NewServer(echo)
+	defer server.Close()
+
+	conns := make([]*websocket.Conn, 0)
+
+	num := 100
+
+	for i := 0; i < num; i++ {
+		conn, _ := NewDialer(server.URL)
+		conns = append(conns, conn)
+	}
+
+	for n := 0; n < b.N; n++ {
+		echo.m.Broadcast([]byte("test"))
+
+		for i := 0; i < num; i++ {
+			conns[i].ReadMessage()
+		}
+	}
+
+	for i := 0; i < num; i++ {
+		conns[i].Close()
 	}
 }
