@@ -1,3 +1,8 @@
+## 2017-02-10
+
+* Return errors for some exposed methods.
+* Add `HandleRequestWithKeys`.
+
 ## 2017-01-20
 
 * Add `Len()` to fetch number of connected sessions.

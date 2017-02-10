@@ -81,6 +81,11 @@ func (m *Melody) HandleError(fn func(*Session, error)) {
 
 // HandleRequest upgrades http requests to websocket connections and dispatches them to be handled by the melody instance.
 func (m *Melody) HandleRequest(w http.ResponseWriter, r *http.Request) error {
+	return m.HandleRequestWithKeys(w, r, nil)
+}
+
+// HandleRequestWithKeys does the same as HandleRequest but populates session.Keys with keys.
+func (m *Melody) HandleRequestWithKeys(w http.ResponseWriter, r *http.Request, keys map[string]interface{}) error {
 	if m.hub.closed() {
 		return errors.New("Melody instance is closed.")
 	}
@@ -93,7 +98,7 @@ func (m *Melody) HandleRequest(w http.ResponseWriter, r *http.Request) error {
 
 	session := &Session{
 		Request: r,
-		Keys:    nil,
+		Keys:    keys,
 		conn:    conn,
 		output:  make(chan *envelope, m.Config.MessageBufferSize),
 		melody:  m,
