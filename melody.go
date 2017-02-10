@@ -39,16 +39,17 @@ func New() *Melody {
 	go hub.run()
 
 	return &Melody{
-		Config:               newConfig(),
-		Upgrader:             upgrader,
-		messageHandler:       func(*Session, []byte) {},
-		messageHandlerBinary: func(*Session, []byte) {},
-		messageSentHandler:   func(*Session, []byte) {},
-		errorHandler:         func(*Session, error) {},
-		connectHandler:       func(*Session) {},
-		disconnectHandler:    func(*Session) {},
-		pongHandler:          func(*Session) {},
-		hub:                  hub,
+		Config:                   newConfig(),
+		Upgrader:                 upgrader,
+		messageHandler:           func(*Session, []byte) {},
+		messageHandlerBinary:     func(*Session, []byte) {},
+		messageSentHandler:       func(*Session, []byte) {},
+		messageSentHandlerBinary: func(*Session, []byte) {},
+		errorHandler:             func(*Session, error) {},
+		connectHandler:           func(*Session) {},
+		disconnectHandler:        func(*Session) {},
+		pongHandler:              func(*Session) {},
+		hub:                      hub,
 	}
 }
 
