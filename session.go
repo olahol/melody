@@ -91,6 +91,13 @@ loop:
 				break loop
 			}
 
+			if msg.t == websocket.TextMessage {
+				s.melody.messageSentHandler(s, msg.msg)
+			}
+
+			if msg.t == websocket.BinaryMessage {
+				s.melody.messageSentHandlerBinary(s, msg.msg)
+			}
 		case <-ticker.C:
 			s.ping()
 		}

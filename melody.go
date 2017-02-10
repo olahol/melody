@@ -14,15 +14,17 @@ type filterFunc func(*Session) bool
 
 // Melody implements a websocket manager.
 type Melody struct {
-	Config               *Config
-	Upgrader             *websocket.Upgrader
-	messageHandler       handleMessageFunc
-	messageHandlerBinary handleMessageFunc
-	errorHandler         handleErrorFunc
-	connectHandler       handleSessionFunc
-	disconnectHandler    handleSessionFunc
-	pongHandler          handleSessionFunc
-	hub                  *hub
+	Config                   *Config
+	Upgrader                 *websocket.Upgrader
+	messageHandler           handleMessageFunc
+	messageHandlerBinary     handleMessageFunc
+	messageSentHandler       handleMessageFunc
+	messageSentHandlerBinary handleMessageFunc
+	errorHandler             handleErrorFunc
+	connectHandler           handleSessionFunc
+	disconnectHandler        handleSessionFunc
+	pongHandler              handleSessionFunc
+	hub                      *hub
 }
 
 // New creates a new melody instance with default Upgrader and Config.
@@ -41,6 +43,7 @@ func New() *Melody {
 		Upgrader:             upgrader,
 		messageHandler:       func(*Session, []byte) {},
 		messageHandlerBinary: func(*Session, []byte) {},
+		messageSentHandler:   func(*Session, []byte) {},
 		errorHandler:         func(*Session, error) {},
 		connectHandler:       func(*Session) {},
 		disconnectHandler:    func(*Session) {},
@@ -72,6 +75,16 @@ func (m *Melody) HandleMessage(fn func(*Session, []byte)) {
 // HandleMessageBinary fires fn when a binary message comes in.
 func (m *Melody) HandleMessageBinary(fn func(*Session, []byte)) {
 	m.messageHandlerBinary = fn
+}
+
+// HandleSentMessage fires fn when a text message is successfully sent.
+func (m *Melody) HandleSentMessage(fn func(*Session, []byte)) {
+	m.messageSentHandler = fn
+}
+
+// HandleSentMessageBinary fires fn when a binary message is successfully sent.
+func (m *Melody) HandleSentMessageBinary(fn func(*Session, []byte)) {
+	m.messageSentHandler = fn
 }
 
 // HandleError fires fn when a session has an error.

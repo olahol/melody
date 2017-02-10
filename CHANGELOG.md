@@ -2,6 +2,7 @@
 
 * Return errors for some exposed methods.
 * Add `HandleRequestWithKeys`.
+* Add `HandleSentMessage` and `HandleSentMessageBinary`.
 
 ## 2017-01-20
 
