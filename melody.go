@@ -27,8 +27,29 @@ const (
 	CloseTLSHandshake            = 1015
 )
 
+// Duplicate of codes from gorilla/websocket for convenience.
+var validReceivedCloseCodes = map[int]bool{
+	// see http://www.iana.org/assignments/websocket/websocket.xhtml#close-code-number
+
+	CloseNormalClosure:           true,
+	CloseGoingAway:               true,
+	CloseProtocolError:           true,
+	CloseUnsupportedData:         true,
+	CloseNoStatusReceived:        false,
+	CloseAbnormalClosure:         false,
+	CloseInvalidFramePayloadData: true,
+	ClosePolicyViolation:         true,
+	CloseMessageTooBig:           true,
+	CloseMandatoryExtension:      true,
+	CloseInternalServerErr:       true,
+	CloseServiceRestart:          true,
+	CloseTryAgainLater:           true,
+	CloseTLSHandshake:            false,
+}
+
 type handleMessageFunc func(*Session, []byte)
 type handleErrorFunc func(*Session, error)
+type handleCloseFunc func(*Session, int, string) error
 type handleSessionFunc func(*Session)
 type filterFunc func(*Session) bool
 
@@ -41,6 +62,7 @@ type Melody struct {
 	messageSentHandler       handleMessageFunc
 	messageSentHandlerBinary handleMessageFunc
 	errorHandler             handleErrorFunc
+	closeHandler             handleCloseFunc
 	connectHandler           handleSessionFunc
 	disconnectHandler        handleSessionFunc
 	pongHandler              handleSessionFunc
@@ -66,6 +88,7 @@ func New() *Melody {
 		messageSentHandler:       func(*Session, []byte) {},
 		messageSentHandlerBinary: func(*Session, []byte) {},
 		errorHandler:             func(*Session, error) {},
+		closeHandler:             func(*Session, int, string) error { return nil },
 		connectHandler:           func(*Session) {},
 		disconnectHandler:        func(*Session) {},
 		pongHandler:              func(*Session) {},
@@ -111,6 +134,25 @@ func (m *Melody) HandleSentMessageBinary(fn func(*Session, []byte)) {
 // HandleError fires fn when a session has an error.
 func (m *Melody) HandleError(fn func(*Session, error)) {
 	m.errorHandler = fn
+}
+
+// HandleClose sets the handler for close messages received from the session.
+// The code argument to h is the received close code or CloseNoStatusReceived
+// if the close message is empty. The default close handler sends a close frame
+// back to the session.
+//
+// The application must read the connection to process close messages as
+// described in the section on Control Frames above.
+//
+// The connection read methods return a CloseError when a close frame is
+// received. Most applications should handle close messages as part of their
+// normal error handling. Applications should only set a close handler when the
+// application must perform some action before sending a close frame back to
+// the session.
+func (m *Melody) HandleClose(fn func(*Session, int, string) error) {
+	if fn != nil {
+		m.closeHandler = fn
+	}
 }
 
 // HandleRequest upgrades http requests to websocket connections and dispatches them to be handled by the melody instance.
