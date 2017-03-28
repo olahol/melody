@@ -9,7 +9,7 @@ type hub struct {
 	broadcast  chan *envelope
 	register   chan *Session
 	unregister chan *Session
-	exit       chan bool
+	exit       chan *envelope
 	open       bool
 	rwmutex    *sync.RWMutex
 }
@@ -20,7 +20,7 @@ func newHub() *hub {
 		broadcast:  make(chan *envelope),
 		register:   make(chan *Session),
 		unregister: make(chan *Session),
-		exit:       make(chan bool),
+		exit:       make(chan *envelope),
 		open:       true,
 		rwmutex:    &sync.RWMutex{},
 	}
@@ -52,9 +52,10 @@ loop:
 				}
 			}
 			h.rwmutex.RUnlock()
-		case <-h.exit:
+		case m := <-h.exit:
 			h.rwmutex.Lock()
 			for s := range h.sessions {
+				s.writeMessage(m)
 				delete(h.sessions, s)
 				s.Close()
 			}

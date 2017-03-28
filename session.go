@@ -2,10 +2,11 @@ package melody
 
 import (
 	"errors"
-	"github.com/gorilla/websocket"
 	"net/http"
 	"sync"
 	"time"
+
+	"github.com/gorilla/websocket"
 )
 
 // Session wrapper around websocket connections.
@@ -161,6 +162,18 @@ func (s *Session) Close() error {
 	}
 
 	s.writeMessage(&envelope{t: websocket.CloseMessage, msg: []byte{}})
+
+	return nil
+}
+
+// CloseWithMsg closes the session with the provided payload.
+// Use the FormatCloseMessage function to format a proper close message payload.
+func (s *Session) CloseWithMsg(msg []byte) error {
+	if s.closed() {
+		return errors.New("Session is already closed.")
+	}
+
+	s.writeMessage(&envelope{t: websocket.CloseMessage, msg: msg})
 
 	return nil
 }

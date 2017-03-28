@@ -2,9 +2,29 @@ package melody
 
 import (
 	"errors"
-	"github.com/gorilla/websocket"
 	"net/http"
 	"sync"
+
+	"github.com/gorilla/websocket"
+)
+
+// Close codes defined in RFC 6455, section 11.7.
+// Duplicate of codes from gorilla/websocket for convenience.
+const (
+	CloseNormalClosure           = 1000
+	CloseGoingAway               = 1001
+	CloseProtocolError           = 1002
+	CloseUnsupportedData         = 1003
+	CloseNoStatusReceived        = 1005
+	CloseAbnormalClosure         = 1006
+	CloseInvalidFramePayloadData = 1007
+	ClosePolicyViolation         = 1008
+	CloseMessageTooBig           = 1009
+	CloseMandatoryExtension      = 1010
+	CloseInternalServerErr       = 1011
+	CloseServiceRestart          = 1012
+	CloseTryAgainLater           = 1013
+	CloseTLSHandshake            = 1015
 )
 
 type handleMessageFunc func(*Session, []byte)
@@ -207,7 +227,19 @@ func (m *Melody) Close() error {
 		return errors.New("Melody instance is already closed.")
 	}
 
-	m.hub.exit <- true
+	m.hub.exit <- &envelope{t: websocket.CloseMessage, msg: []byte{}}
+
+	return nil
+}
+
+// CloseWithMsg closes the melody instance with the given close payload and all connected sessions.
+// Use the FormatCloseMessage function to format a proper close message payload.
+func (m *Melody) CloseWithMsg(msg []byte) error {
+	if m.hub.closed() {
+		return errors.New("Melody instance is already closed.")
+	}
+
+	m.hub.exit <- &envelope{t: websocket.CloseMessage, msg: msg}
 
 	return nil
 }
@@ -215,4 +247,9 @@ func (m *Melody) Close() error {
 // Len return the number of connected sessions.
 func (m *Melody) Len() int {
 	return m.hub.len()
+}
+
+// FormatCloseMessage formats closeCode and text as a WebSocket close message.
+func FormatCloseMessage(closeCode int, text string) []byte {
+	return websocket.FormatCloseMessage(closeCode, text)
 }
