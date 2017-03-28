@@ -1,14 +1,16 @@
 package main
 
 import (
-	"github.com/gin-gonic/gin"
-	"github.com/olahol/melody"
 	"net/http"
 	"strconv"
 	"strings"
 	"sync"
+
+	"github.com/gin-gonic/gin"
+	"github.com/olahol/melody"
 )
 
+// GopherInfo contains information about the gopher on screen
 type GopherInfo struct {
 	ID, X, Y string
 }
@@ -35,7 +37,7 @@ func main() {
 		}
 		gophers[s] = &GopherInfo{strconv.Itoa(counter), "0", "0"}
 		s.Write([]byte("iam " + gophers[s].ID))
-		counter += 1
+		counter++
 		lock.Unlock()
 	})
 

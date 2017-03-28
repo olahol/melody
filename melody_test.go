@@ -2,7 +2,6 @@ package melody
 
 import (
 	"bytes"
-	"github.com/gorilla/websocket"
 	"math/rand"
 	"net/http"
 	"net/http/httptest"
@@ -11,6 +10,8 @@ import (
 	"testing"
 	"testing/quick"
 	"time"
+
+	"github.com/gorilla/websocket"
 )
 
 type TestServer struct {
@@ -145,7 +146,7 @@ func TestLen(t *testing.T) {
 
 		if rand.Float32() < disconnect {
 			conns[i] = nil
-			disconnected += 1
+			disconnected++
 			conn.Close()
 			continue
 		}
