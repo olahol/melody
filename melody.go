@@ -232,6 +232,16 @@ func (m *Melody) BroadcastOthers(msg []byte, s *Session) error {
 	})
 }
 
+// BroadcastMultiple broadcasts a text message to multiple sessions given in the sessions slice.
+func (m *Melody) BroadcastMultiple(msg []byte, sessions []*Session) error {
+	return m.BroadcastFilter(msg, func(q *Session) bool {
+		for _, sess := range sessions {
+			return sess == q
+		}
+		return false
+	})
+}
+
 // BroadcastBinary broadcasts a binary message to all sessions.
 func (m *Melody) BroadcastBinary(msg []byte) error {
 	if m.hub.closed() {
