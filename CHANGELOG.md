@@ -1,3 +1,7 @@
+## 2017-04-09
+
+* Add control message support.
+
 ## 2017-02-10
 
 * Return errors for some exposed methods.
