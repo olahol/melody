@@ -1,6 +1,7 @@
 ## 2017-04-09
 
 * Add control message support.
+* Add `IsClosed` to Session.
 
 ## 2017-02-10
 
