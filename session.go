@@ -211,3 +211,8 @@ func (s *Session) MustGet(key string) interface{} {
 
 	panic("Key \"" + key + "\" does not exist")
 }
+
+// IsClosed returns the status of the connection.
+func (s *Session) IsClosed() bool {
+	return s.closed()
+}
