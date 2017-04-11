@@ -4,7 +4,7 @@ import (
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/engine/standard"
 	"github.com/labstack/echo/middleware"
-	"github.com/olahol/melody"
+	"gopkg.in/olahol/melody.v1"
 	"net/http"
 )
 

@@ -2,7 +2,7 @@ package main
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/olahol/melody"
+	"gopkg.in/olahol/melody.v1"
 	"net/http"
 )
 

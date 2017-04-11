@@ -19,7 +19,7 @@ your way so you can write real-time apps. Features include:
 ## Install
 
 ```bash
-go get github.com/olahol/melody
+go get gopkg.in/olahol/melody.v1
 ```
 
 ## [Example: chat](https://github.com/olahol/melody/tree/master/examples/chat)
@@ -32,7 +32,7 @@ package main
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/olahol/melody"
+	"gopkg.in/olahol/melody.v1"
 	"net/http"
 )
 
@@ -64,7 +64,7 @@ import (
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/engine/standard"
 	"github.com/labstack/echo/middleware"
-	"github.com/olahol/melody"
+	"gopkg.in/olahol/melody.v1"
 	"net/http"
 )
 
@@ -102,7 +102,7 @@ package main
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/olahol/melody"
+	"gopkg.in/olahol/melody.v1"
 	"net/http"
 	"strconv"
 	"strings"
