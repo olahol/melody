@@ -1,3 +1,8 @@
+## 2017-04-11
+
+* Allow any origin by default.
+* Add `BroadcastMultiple`.
+
 ## 2017-04-09
 
 * Add control message support.
