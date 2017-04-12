@@ -302,6 +302,11 @@ func (m *Melody) Len() int {
 	return m.hub.len()
 }
 
+// IsClosed returns the status of the melody instance.
+func (m *Melody) IsClosed() bool {
+	return m.hub.closed()
+}
+
 // FormatCloseMessage formats closeCode and text as a WebSocket close message.
 func FormatCloseMessage(closeCode int, text string) []byte {
 	return websocket.FormatCloseMessage(closeCode, text)
