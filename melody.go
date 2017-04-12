@@ -89,7 +89,7 @@ func New() *Melody {
 		messageSentHandler:       func(*Session, []byte) {},
 		messageSentHandlerBinary: func(*Session, []byte) {},
 		errorHandler:             func(*Session, error) {},
-		closeHandler:             func(*Session, int, string) error { return nil },
+		closeHandler:             nil,
 		connectHandler:           func(*Session) {},
 		disconnectHandler:        func(*Session) {},
 		pongHandler:              func(*Session) {},

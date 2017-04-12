@@ -115,10 +115,11 @@ func (s *Session) readPump() {
 		return nil
 	})
 
-	s.conn.SetCloseHandler(func(code int, text string) error {
-		s.melody.closeHandler(s, code, text)
-		return nil
-	})
+	if s.melody.closeHandler != nil {
+		s.conn.SetCloseHandler(func(code int, text string) error {
+			return s.melody.closeHandler(s, code, text)
+		})
+	}
 
 	for {
 		t, message, err := s.conn.ReadMessage()
