@@ -1,3 +1,7 @@
+## 2017-05-18
+
+* Fix `HandleSentMessageBinary`.
+
 ## 2017-04-11
 
 * Allow any origin by default.

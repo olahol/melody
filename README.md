@@ -173,6 +173,7 @@ func main() {
 * Matt Caldwell (@mattcaldwell)
 * Heikki Uljas (@huljas)
 * Robbie Trencheny (@robbiet480)
+* yangjinecho (@yangjinecho)
 
 ## FAQ
 

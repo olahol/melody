@@ -129,7 +129,7 @@ func (m *Melody) HandleSentMessage(fn func(*Session, []byte)) {
 
 // HandleSentMessageBinary fires fn when a binary message is successfully sent.
 func (m *Melody) HandleSentMessageBinary(fn func(*Session, []byte)) {
-	m.messageSentHandler = fn
+	m.messageSentHandlerBinary = fn
 }
 
 // HandleError fires fn when a session has an error.
