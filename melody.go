@@ -167,7 +167,7 @@ func (m *Melody) HandleRequestWithKeys(w http.ResponseWriter, r *http.Request, k
 		return errors.New("melody instance is closed")
 	}
 
-	conn, err := m.Upgrader.Upgrade(w, r, nil)
+	conn, err := m.Upgrader.Upgrade(w, r, w.Header())
 
 	if err != nil {
 		return err
