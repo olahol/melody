@@ -187,6 +187,9 @@ func (s *Session) CloseWithMsg(msg []byte) error {
 // Set is used to store a new key/value pair exclusivelly for this session.
 // It also lazy initializes s.Keys if it was not used previously.
 func (s *Session) Set(key string, value interface{}) {
+	s.rwmutex.Lock()
+	defer s.rwmutex.Unlock()
+
 	if s.Keys == nil {
 		s.Keys = make(map[string]interface{})
 	}
@@ -197,6 +200,9 @@ func (s *Session) Set(key string, value interface{}) {
 // Get returns the value for the given key, ie: (value, true).
 // If the value does not exists it returns (nil, false)
 func (s *Session) Get(key string) (value interface{}, exists bool) {
+	s.rwmutex.RLock()
+	defer s.rwmutex.RUnlock()
+
 	if s.Keys != nil {
 		value, exists = s.Keys[key]
 	}
@@ -206,6 +212,9 @@ func (s *Session) Get(key string) (value interface{}, exists bool) {
 
 // MustGet returns the value for the given key if it exists, otherwise it panics.
 func (s *Session) MustGet(key string) interface{} {
+	s.rwmutex.RLock()
+	defer s.rwmutex.RUnlock()
+
 	if value, exists := s.Get(key); exists {
 		return value
 	}
