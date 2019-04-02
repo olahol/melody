@@ -274,6 +274,14 @@ func (m *Melody) BroadcastBinaryOthers(msg []byte, s *Session) error {
 	})
 }
 
+// Sessions returns all sessions. An error is returned if the melody session is closed.
+func (m *Melody) Sessions() ([]*Session, error) {
+	if m.hub.closed() {
+		return nil, errors.New("melody instance is closed")
+	}
+	return m.hub.all(), nil
+}
+
 // Close closes the melody instance and all connected sessions.
 func (m *Melody) Close() error {
 	if m.hub.closed() {

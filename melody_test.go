@@ -163,6 +163,56 @@ func TestLen(t *testing.T) {
 	}
 }
 
+func TestGetSessions(t *testing.T) {
+	rand.Seed(time.Now().UnixNano())
+
+	connect := int(rand.Int31n(100))
+	disconnect := rand.Float32()
+	conns := make([]*websocket.Conn, connect)
+	defer func() {
+		for _, conn := range conns {
+			if conn != nil {
+				conn.Close()
+			}
+		}
+	}()
+
+	echo := NewTestServerHandler(func(session *Session, msg []byte) {})
+	server := httptest.NewServer(echo)
+	defer server.Close()
+
+	disconnected := 0
+	for i := 0; i < connect; i++ {
+		conn, err := NewDialer(server.URL)
+
+		if err != nil {
+			t.Error(err)
+		}
+
+		if rand.Float32() < disconnect {
+			conns[i] = nil
+			disconnected++
+			conn.Close()
+			continue
+		}
+
+		conns[i] = conn
+	}
+
+	time.Sleep(time.Millisecond)
+
+	connected := connect - disconnected
+
+	allsess, err := echo.m.Sessions()
+	if err != nil {
+		t.Fatalf("error retrieving sessions: %v", err.Error())
+	}
+
+	if len(allsess) != connected {
+		t.Errorf("melody sessions %d should equal %d", len(allsess), connected)
+	}
+}
+
 func TestEchoBinary(t *testing.T) {
 	echo := NewTestServer()
 	echo.m.HandleMessageBinary(func(session *Session, msg []byte) {
