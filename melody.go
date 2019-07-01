@@ -2,6 +2,7 @@ package melody
 
 import (
 	"errors"
+	"melody/pubsub"
 	"net/http"
 	"sync"
 
@@ -67,6 +68,7 @@ type Melody struct {
 	disconnectHandler        handleSessionFunc
 	pongHandler              handleSessionFunc
 	hub                      *hub
+	pubsub                   *pubsub.PubSub
 }
 
 // New creates a new melody instance with default Upgrader and Config.
@@ -94,6 +96,7 @@ func New() *Melody {
 		disconnectHandler:        func(*Session) {},
 		pongHandler:              func(*Session) {},
 		hub:                      hub,
+		pubsub:                   pubsub.New(100),
 	}
 }
 
@@ -181,6 +184,7 @@ func (m *Melody) HandleRequestWithKeys(w http.ResponseWriter, r *http.Request, k
 		melody:  m,
 		open:    true,
 		rwmutex: &sync.RWMutex{},
+		subChan: m.pubsub.Sub("default"),
 	}
 
 	m.hub.register <- session

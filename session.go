@@ -19,6 +19,21 @@ type Session struct {
 	melody   *Melody
 	open     bool
 	rwmutex  *sync.RWMutex
+	subChan  chan interface{}
+}
+
+// AddSub 訂閱某個,多個topic
+func (s *Session) AddSub(topicNames ...string) {
+	if s.subChan != nil {
+		s.melody.pubsub.AddSub(s.subChan, topicNames...)
+	} else {
+		var str = ""
+		for _, topicName := range topicNames {
+			str += topicName + ","
+		}
+		str = str[0 : len(str)-1]
+		s.melody.errorHandler(s, errors.New("error of add current channel,"+str))
+	}
 }
 
 func (s *Session) writeMessage(message *envelope) {
@@ -62,6 +77,7 @@ func (s *Session) close() {
 		s.open = false
 		s.conn.Close()
 		close(s.output)
+		close(s.subChan)
 		s.rwmutex.Unlock()
 	}
 }
@@ -77,6 +93,10 @@ func (s *Session) writePump() {
 loop:
 	for {
 		select {
+		case v := <-s.subChan:
+			if msg, isExist := v.([]byte); isExist {
+				s.Write(msg)
+			}
 		case msg, ok := <-s.output:
 			if !ok {
 				break loop
@@ -188,8 +208,8 @@ func (s *Session) CloseWithMsg(msg []byte) error {
 // Set is used to store a new key/value pair exclusivelly for this session.
 // It also lazy initializes s.Keys if it was not used previously.
 func (s *Session) Set(key string, value interface{}) {
-	s.keymutex.RLock()
-	defer s.keymutex.RUnlock()
+	s.keymutex.Lock()
+	defer s.keymutex.Unlock()
 	if s.Keys == nil {
 		s.Keys = make(map[string]interface{})
 	}
@@ -200,9 +220,9 @@ func (s *Session) Set(key string, value interface{}) {
 // Get returns the value for the given key, ie: (value, true).
 // If the value does not exists it returns (nil, false)
 func (s *Session) Get(key string) (value interface{}, exists bool) {
+	s.keymutex.RLock()
+	defer s.keymutex.RUnlock()
 	if s.Keys != nil {
-		s.keymutex.RLock()
-		defer s.keymutex.RUnlock()
 		value, exists = s.Keys[key]
 	}
 
