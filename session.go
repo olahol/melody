@@ -2,6 +2,7 @@ package melody
 
 import (
 	"errors"
+	"net"
 	"net/http"
 	"sync"
 	"time"
@@ -216,4 +217,14 @@ func (s *Session) MustGet(key string) interface{} {
 // IsClosed returns the status of the connection.
 func (s *Session) IsClosed() bool {
 	return s.closed()
+}
+
+// LocalAddr returns the local addr of the connection.
+func (s *Session) LocalAddr() net.Addr {
+	return s.conn.LocalAddr()
+}
+
+// RemoteAddr returns the remote addr of the connection.
+func (s *Session) RemoteAddr() net.Addr {
+	return s.conn.RemoteAddr()
 }
