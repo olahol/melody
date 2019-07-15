@@ -217,3 +217,13 @@ func (s *Session) MustGet(key string) interface{} {
 func (s *Session) IsClosed() bool {
 	return s.closed()
 }
+
+// LocalAddr returns the local addr of the connection.
+func (s *session) LocalAddr() net.Addr {
+	return conn.LocalAddr()
+}
+
+// RemoteAddr returns the remote addr of the connection.
+func (s *session) RemoteAddr() net.Addr {
+	return conn.RemoteAddr()
+}
