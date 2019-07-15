@@ -1,6 +1,7 @@
 package melody
 
 import (
+	"net"
 	"net/http"
 	"sync"
 	"time"
@@ -220,11 +221,11 @@ func (s *Session) IsClosed() bool {
 }
 
 // LocalAddr returns the local addr of the connection.
-func (s *session) LocalAddr() net.Addr {
-	return conn.LocalAddr()
+func (s *Session) LocalAddr() net.Addr {
+	return s.conn.LocalAddr()
 }
 
 // RemoteAddr returns the remote addr of the connection.
-func (s *session) RemoteAddr() net.Addr {
-	return conn.RemoteAddr()
+func (s *Session) RemoteAddr() net.Addr {
+	return s.conn.RemoteAddr()
 }
