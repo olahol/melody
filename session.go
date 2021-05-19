@@ -11,13 +11,14 @@ import (
 
 // Session wrapper around websocket connections.
 type Session struct {
-	Request *http.Request
-	Keys    map[string]interface{}
-	conn    *websocket.Conn
-	output  chan *envelope
-	melody  *Melody
-	open    bool
-	rwmutex *sync.RWMutex
+	Request    *http.Request
+	Keys       map[string]interface{}
+	conn       *websocket.Conn
+	output     chan *envelope
+	outputDone chan struct{}
+	melody     *Melody
+	open       bool
+	rwmutex    *sync.RWMutex
 }
 
 func (s *Session) writeMessage(message *envelope) {
@@ -56,12 +57,13 @@ func (s *Session) closed() bool {
 }
 
 func (s *Session) close() {
-	if !s.closed() {
-		s.rwmutex.Lock()
-		s.open = false
+	s.rwmutex.Lock()
+	open := s.open
+	s.open = false
+	s.rwmutex.Unlock()
+	if open {
 		s.conn.Close()
-		close(s.output)
-		s.rwmutex.Unlock()
+		close(s.outputDone)
 	}
 }
 
@@ -76,11 +78,7 @@ func (s *Session) writePump() {
 loop:
 	for {
 		select {
-		case msg, ok := <-s.output:
-			if !ok {
-				break loop
-			}
-
+		case msg := <-s.output:
 			err := s.writeRaw(msg)
 
 			if err != nil {
@@ -101,6 +99,10 @@ loop:
 			}
 		case <-ticker.C:
 			s.ping()
+		case _, ok := <-s.outputDone:
+			if !ok {
+				break loop
+			}
 		}
 	}
 }

@@ -174,13 +174,14 @@ func (m *Melody) HandleRequestWithKeys(w http.ResponseWriter, r *http.Request, k
 	}
 
 	session := &Session{
-		Request: r,
-		Keys:    keys,
-		conn:    conn,
-		output:  make(chan *envelope, m.Config.MessageBufferSize),
-		melody:  m,
-		open:    true,
-		rwmutex: &sync.RWMutex{},
+		Request:    r,
+		Keys:       keys,
+		conn:       conn,
+		output:     make(chan *envelope, m.Config.MessageBufferSize),
+		outputDone: make(chan struct{}),
+		melody:     m,
+		open:       true,
+		rwmutex:    &sync.RWMutex{},
 	}
 
 	m.hub.register <- session
