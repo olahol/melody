@@ -1,9 +1,10 @@
 package main
 
 import (
-	"github.com/gin-gonic/gin"
-	"gopkg.in/olahol/melody.v1"
 	"net/http"
+
+	"github.com/gin-gonic/gin"
+	"github.com/lesismal/melody"
 )
 
 func main() {

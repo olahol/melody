@@ -11,13 +11,14 @@ import (
 
 // Session wrapper around websocket connections.
 type Session struct {
-	Request *http.Request
-	Keys    map[string]interface{}
-	conn    *websocket.Conn
-	output  chan *envelope
-	melody  *Melody
-	open    bool
-	rwmutex *sync.RWMutex
+	Request    *http.Request
+	Keys       map[string]interface{}
+	conn       *websocket.Conn
+	output     chan *envelope
+	outputDone chan struct{}
+	melody     *Melody
+	open       bool
+	rwmutex    sync.RWMutex
 }
 
 func (s *Session) writeMessage(message *envelope) {
@@ -56,12 +57,13 @@ func (s *Session) closed() bool {
 }
 
 func (s *Session) close() {
-	if !s.closed() {
-		s.rwmutex.Lock()
-		s.open = false
+	s.rwmutex.Lock()
+	open := s.open
+	s.open = false
+	s.rwmutex.Unlock()
+	if open {
 		s.conn.Close()
-		close(s.output)
-		s.rwmutex.Unlock()
+		close(s.outputDone)
 	}
 }
 
@@ -76,11 +78,7 @@ func (s *Session) writePump() {
 loop:
 	for {
 		select {
-		case msg, ok := <-s.output:
-			if !ok {
-				break loop
-			}
-
+		case msg := <-s.output:
 			err := s.writeRaw(msg)
 
 			if err != nil {
@@ -101,6 +99,10 @@ loop:
 			}
 		case <-ticker.C:
 			s.ping()
+		case _, ok := <-s.outputDone:
+			if !ok {
+				break loop
+			}
 		}
 	}
 }
@@ -184,19 +186,12 @@ func (s *Session) CloseWithMsg(msg []byte) error {
 	return nil
 }
 
-// Set is used to store a new key/value pair exclusivelly for this session.
-// It also lazy initializes s.Keys if it was not used previously.
-func (s *Session) Set(key string, value interface{}) {
-	if s.Keys == nil {
-		s.Keys = make(map[string]interface{})
-	}
-
-	s.Keys[key] = value
-}
-
 // Get returns the value for the given key, ie: (value, true).
 // If the value does not exists it returns (nil, false)
 func (s *Session) Get(key string) (value interface{}, exists bool) {
+	s.rwmutex.Lock()
+	defer s.rwmutex.Unlock()
+
 	if s.Keys != nil {
 		value, exists = s.Keys[key]
 	}
@@ -204,14 +199,39 @@ func (s *Session) Get(key string) (value interface{}, exists bool) {
 	return
 }
 
-// MustGet returns the value for the given key if it exists, otherwise it panics.
-func (s *Session) MustGet(key string) interface{} {
-	if value, exists := s.Get(key); exists {
-		return value
+// Set is used to store a new key/value pair exclusivelly for this session.
+// It also lazy initializes s.Keys if it was not used previously.
+func (s *Session) Set(key string, value interface{}) {
+	s.rwmutex.Lock()
+	defer s.rwmutex.Unlock()
+
+	if s.Keys == nil {
+		s.Keys = make(map[string]interface{})
 	}
 
-	panic("Key \"" + key + "\" does not exist")
+	s.Keys[key] = value
 }
+
+// Delete is used to delete the key/value pair exclusivelly for this session.
+func (s *Session) Delete(key string, value interface{}) {
+	s.rwmutex.Lock()
+	defer s.rwmutex.Unlock()
+
+	if s.Keys == nil {
+		return
+	}
+
+	delete(s.Keys, key)
+}
+
+// MustGet returns the value for the given key if it exists, otherwise it panics.
+// func (s *Session) MustGet(key string) interface{} {
+// 	if value, exists := s.Get(key); exists {
+// 		return value
+// 	}
+
+// 	panic("Key \"" + key + "\" does not exist")
+// }
 
 // IsClosed returns the status of the connection.
 func (s *Session) IsClosed() bool {

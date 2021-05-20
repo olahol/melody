@@ -19,12 +19,12 @@ your way so you can write real-time apps. Features include:
 ## Install
 
 ```bash
-go get gopkg.in/olahol/melody.v1
+go get github.com/lesismal/melody
 ```
 
-## [Example: chat](https://github.com/olahol/melody/tree/master/examples/chat)
+## [Example: chat](https://github.com/lesismal/melody/tree/master/examples/chat)
 
-[![Chat](https://cdn.rawgit.com/olahol/melody/master/examples/chat/demo.gif "Demo")](https://github.com/olahol/melody/tree/master/examples/chat)
+[![Chat](https://cdn.rawgit.com/lesismal/melody/master/examples/chat/demo.gif "Demo")](https://github.com/lesismal/melody/tree/master/examples/chat)
 
 Using [Gin](https://github.com/gin-gonic/gin):
 ```go
@@ -32,7 +32,7 @@ package main
 
 import (
 	"github.com/gin-gonic/gin"
-	"gopkg.in/olahol/melody.v1"
+	"github.com/lesismal/melody"
 	"net/http"
 )
 
@@ -64,7 +64,7 @@ import (
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/engine/standard"
 	"github.com/labstack/echo/middleware"
-	"gopkg.in/olahol/melody.v1"
+	"github.com/lesismal/melody"
 	"net/http"
 )
 
@@ -93,16 +93,16 @@ func main() {
 }
 ```
 
-## [Example: gophers](https://github.com/olahol/melody/tree/master/examples/gophers)
+## [Example: gophers](https://github.com/lesismal/melody/tree/master/examples/gophers)
 
-[![Gophers](https://cdn.rawgit.com/olahol/melody/master/examples/gophers/demo.gif "Demo")](https://github.com/olahol/melody/tree/master/examples/gophers)
+[![Gophers](https://cdn.rawgit.com/lesismal/melody/master/examples/gophers/demo.gif "Demo")](https://github.com/lesismal/melody/tree/master/examples/gophers)
 
 ```go
 package main
 
 import (
 	"github.com/gin-gonic/gin"
-	"gopkg.in/olahol/melody.v1"
+	"github.com/lesismal/melody"
 	"net/http"
 	"strconv"
 	"strings"
@@ -162,9 +162,9 @@ func main() {
 }
 ```
 
-### [More examples](https://github.com/olahol/melody/tree/master/examples)
+### [More examples](https://github.com/lesismal/melody/tree/master/examples)
 
-## [Documentation](https://godoc.org/github.com/olahol/melody)
+## [Documentation](https://godoc.org/github.com/lesismal/melody)
 
 ## Contributors
 

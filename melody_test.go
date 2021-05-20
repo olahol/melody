@@ -232,8 +232,14 @@ func TestMetadata(t *testing.T) {
 		session.Set("stamp", time.Now().UnixNano())
 	})
 	echo.m.HandleMessage(func(session *Session, msg []byte) {
-		stamp := session.MustGet("stamp").(int64)
-		session.Write([]byte(strconv.Itoa(int(stamp))))
+		v, exists := session.Get("stamp")
+		if exists {
+			stamp := v.(int64)
+			time.Sleep(time.Microsecond)
+			session.Write([]byte(strconv.Itoa(int(stamp))))
+		} else {
+			panic("Key \"" + "stamp" + "\" does not exist")
+		}
 	})
 	server := httptest.NewServer(echo)
 	defer server.Close()
