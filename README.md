@@ -19,7 +19,7 @@ your way so you can write real-time apps. Features include:
 ## Install
 
 ```bash
-go get gopkg.in/olahol/melody.v1
+go get github.com/olahol/melody
 ```
 
 ## [Example: chat](https://github.com/olahol/melody/tree/master/examples/chat)
@@ -32,7 +32,7 @@ package main
 
 import (
 	"github.com/gin-gonic/gin"
-	"gopkg.in/olahol/melody.v1"
+	"github.com/olahol/melody"
 	"net/http"
 )
 
@@ -61,10 +61,9 @@ Using [Echo](https://github.com/labstack/echo):
 package main
 
 import (
-	"github.com/labstack/echo"
-	"github.com/labstack/echo/engine/standard"
-	"github.com/labstack/echo/middleware"
-	"gopkg.in/olahol/melody.v1"
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
+	"github.com/olahol/melody"
 	"net/http"
 )
 
@@ -76,12 +75,12 @@ func main() {
 	e.Use(middleware.Recover())
 
 	e.GET("/", func(c echo.Context) error {
-		http.ServeFile(c.Response().(*standard.Response).ResponseWriter, c.Request().(*standard.Request).Request, "index.html")
+		http.ServeFile(c.Response().Writer, c.Request(), "index.html")
 		return nil
 	})
 
 	e.GET("/ws", func(c echo.Context) error {
-		m.HandleRequest(c.Response().(*standard.Response).ResponseWriter, c.Request().(*standard.Request).Request)
+		m.HandleRequest(c.Response().Writer, c.Request())
 		return nil
 	})
 
@@ -89,76 +88,7 @@ func main() {
 		m.Broadcast(msg)
 	})
 
-	e.Run(standard.New(":5000"))
-}
-```
-
-## [Example: gophers](https://github.com/olahol/melody/tree/master/examples/gophers)
-
-[![Gophers](https://cdn.rawgit.com/olahol/melody/master/examples/gophers/demo.gif "Demo")](https://github.com/olahol/melody/tree/master/examples/gophers)
-
-```go
-package main
-
-import (
-	"github.com/gin-gonic/gin"
-	"gopkg.in/olahol/melody.v1"
-	"net/http"
-	"strconv"
-	"strings"
-	"sync"
-)
-
-type GopherInfo struct {
-	ID, X, Y string
-}
-
-func main() {
-	router := gin.Default()
-	mrouter := melody.New()
-	gophers := make(map[*melody.Session]*GopherInfo)
-	lock := new(sync.Mutex)
-	counter := 0
-
-	router.GET("/", func(c *gin.Context) {
-		http.ServeFile(c.Writer, c.Request, "index.html")
-	})
-
-	router.GET("/ws", func(c *gin.Context) {
-		mrouter.HandleRequest(c.Writer, c.Request)
-	})
-
-	mrouter.HandleConnect(func(s *melody.Session) {
-		lock.Lock()
-		for _, info := range gophers {
-			s.Write([]byte("set " + info.ID + " " + info.X + " " + info.Y))
-		}
-		gophers[s] = &GopherInfo{strconv.Itoa(counter), "0", "0"}
-		s.Write([]byte("iam " + gophers[s].ID))
-		counter += 1
-		lock.Unlock()
-	})
-
-	mrouter.HandleDisconnect(func(s *melody.Session) {
-		lock.Lock()
-		mrouter.BroadcastOthers([]byte("dis "+gophers[s].ID), s)
-		delete(gophers, s)
-		lock.Unlock()
-	})
-
-	mrouter.HandleMessage(func(s *melody.Session, msg []byte) {
-		p := strings.Split(string(msg), " ")
-		lock.Lock()
-		info := gophers[s]
-		if len(p) == 2 {
-			info.X = p[0]
-			info.Y = p[1]
-			mrouter.BroadcastOthers([]byte("set "+info.ID+" "+info.X+" "+info.Y), s)
-		}
-		lock.Unlock()
-	})
-
-	router.Run(":5000")
+	e.Logger.Fatal(e.Start(":5000"))
 }
 ```
 
@@ -174,6 +104,7 @@ func main() {
 * Heikki Uljas (@huljas)
 * Robbie Trencheny (@robbiet480)
 * yangjinecho (@yangjinecho)
+* lesismal (@lesismal)
 
 ## FAQ
 

@@ -2,8 +2,8 @@ package main
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/go-fsnotify/fsnotify"
-	"gopkg.in/olahol/melody.v1"
+	"github.com/fsnotify/fsnotify"
+	"github.com/olahol/melody"
 	"io/ioutil"
 	"net/http"
 )
