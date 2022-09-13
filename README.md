@@ -105,6 +105,8 @@ func main() {
 * Robbie Trencheny (@robbiet480)
 * yangjinecho (@yangjinecho)
 * lesismal (@lesismal)
+* parkerzhu (@parkerzhu)
+* gabstv (@gabstv)
 
 ## FAQ
 
