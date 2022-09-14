@@ -2,15 +2,13 @@ package main
 
 import (
 	"net/http"
-	"strconv"
 	"strings"
-	"sync"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/olahol/melody"
 )
 
-// GopherInfo contains information about the gopher on screen
 type GopherInfo struct {
 	ID, X, Y string
 }
@@ -18,9 +16,6 @@ type GopherInfo struct {
 func main() {
 	router := gin.Default()
 	mrouter := melody.New()
-	gophers := make(map[*melody.Session]*GopherInfo)
-	lock := new(sync.Mutex)
-	counter := 0
 
 	router.GET("/", func(c *gin.Context) {
 		http.ServeFile(c.Writer, c.Request, "index.html")
@@ -31,33 +26,32 @@ func main() {
 	})
 
 	mrouter.HandleConnect(func(s *melody.Session) {
-		lock.Lock()
-		for _, info := range gophers {
+		ss, _ := mrouter.Sessions()
+
+		for _, o := range ss {
+			info := o.MustGet("info").(*GopherInfo)
 			s.Write([]byte("set " + info.ID + " " + info.X + " " + info.Y))
 		}
-		gophers[s] = &GopherInfo{strconv.Itoa(counter), "0", "0"}
-		s.Write([]byte("iam " + gophers[s].ID))
-		counter++
-		lock.Unlock()
+
+		id := uuid.NewString()
+		s.Set("info", &GopherInfo{id, "0", "0"})
+
+		s.Write([]byte("iam " + id))
 	})
 
 	mrouter.HandleDisconnect(func(s *melody.Session) {
-		lock.Lock()
-		mrouter.BroadcastOthers([]byte("dis "+gophers[s].ID), s)
-		delete(gophers, s)
-		lock.Unlock()
+		info := s.MustGet("info").(*GopherInfo)
+		mrouter.BroadcastOthers([]byte("dis "+info.ID), s)
 	})
 
 	mrouter.HandleMessage(func(s *melody.Session, msg []byte) {
 		p := strings.Split(string(msg), " ")
-		lock.Lock()
-		info := gophers[s]
 		if len(p) == 2 {
+			info := s.MustGet("info").(*GopherInfo)
 			info.X = p[0]
 			info.Y = p[1]
 			mrouter.BroadcastOthers([]byte("set "+info.ID+" "+info.X+" "+info.Y), s)
 		}
-		lock.Unlock()
 	})
 
 	router.Run(":5000")

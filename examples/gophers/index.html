@@ -22,7 +22,7 @@
     <script>
       var url = "ws://" + window.location.host + "/ws";
       var ws = new WebSocket(url);
-      var myid = -1;
+      var myid = "";
 
       ws.onmessage = function (msg) {
         var cmds = {"iam": iam, "set": set, "dis": dis};
@@ -60,7 +60,7 @@
       }
 
       window.onmousemove = function (e) {
-        if (myid > -1) {
+        if (myid !== "") {
           set(myid, e.pageX, e.pageY);
           ws.send([e.pageX, e.pageY].join(" "));
         }
