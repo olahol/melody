@@ -13,7 +13,7 @@ your way so you can write real-time apps. Features include:
 * [x] Clear and easy interface similar to `net/http` or Gin.
 * [x] A simple way to broadcast to all or selected connected sessions.
 * [x] Message buffers making concurrent writing safe.
-* [x] Automatic handling of ping/pong and session timeouts.
+* [x] Automatic handling of sending ping/pong heartbeats that timeout broken sessions.
 * [x] Store data on sessions.
 
 ## Install
