@@ -5,10 +5,9 @@ import (
 	"net/url"
 )
 
-// MelodyClient implements a websocket connection.
+// MelodyClient implements a websocket connection to a server.
 type MelodyClient struct {
 	Config                   *Config
-	Upgrader                 *websocket.Upgrader
 	messageHandler           handleClientMessageFunc
 	messageHandlerBinary     handleClientMessageFunc
 	messageSentHandler       handleClientMessageFunc
@@ -27,7 +26,7 @@ type handleClientMessageFunc func([]byte)
 type handleClientErrorFunc func(error)
 type handleClientCloseFunc func(int, string) error
 
-// TODO document
+// NewClient takes in a url.URL object and prepares a new client for use with a Websocket server.
 func NewClient(url url.URL) *MelodyClient {
 
 	c := &MelodyClient{
@@ -47,6 +46,7 @@ func NewClient(url url.URL) *MelodyClient {
 	return c
 }
 
+// Connect performs a connection to the WebSocket server URL defined when creating the client.
 func (m *MelodyClient) Connect() {
 	m.hub.run()
 }
@@ -135,18 +135,6 @@ func (m *MelodyClient) Close() error {
 	}
 
 	m.hub.exit <- &envelope{t: websocket.CloseMessage, msg: []byte{}}
-
-	return nil
-}
-
-// CloseWithMsg closes the melody instance with the given close payload and all connected sessions.
-// Use the FormatCloseMessage function to format a proper close message payload.
-func (m *MelodyClient) CloseWithMsg(msg []byte) error {
-	if m.hub.closed() {
-		return ErrClosed
-	}
-
-	m.hub.exit <- &envelope{t: websocket.CloseMessage, msg: msg}
 
 	return nil
 }

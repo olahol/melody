@@ -15,6 +15,7 @@ your way so you can write real-time apps. Features include:
 * [x] Message buffers making concurrent writing safe.
 * [x] Automatic handling of sending ping/pong heartbeats that timeout broken sessions.
 * [x] Store data on sessions.
+* [x] Websocket client.
 
 ## Install
 
@@ -172,6 +173,7 @@ func main() {
 * lesismal (@lesismal)
 * parkerzhu (@parkerzhu)
 * gabstv (@gabstv)
+* Kai Averkvist (@kaiaverkvist)
 
 ## FAQ
 
