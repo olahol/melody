@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"strconv"
 	"strings"
+	"sync"
 	"testing"
 	"testing/quick"
 	"time"
@@ -280,7 +281,6 @@ func TestBroadcast(t *testing.T) {
 }
 
 func TestClose(t *testing.T) {
-	done := make(chan bool)
 	ws := NewTestServer()
 
 	server := httptest.NewServer(ws)
@@ -295,13 +295,9 @@ func TestClose(t *testing.T) {
 		defer conns[i].Close()
 	}
 
-	q := n
+	q := make(chan bool)
 	ws.m.HandleDisconnect(func(s *Session) {
-		q--
-
-		if q == 0 {
-			close(done)
-		}
+		q <- true
 	})
 
 	ws.m.Close()
@@ -312,7 +308,13 @@ func TestClose(t *testing.T) {
 
 	assert.Zero(t, ws.m.Len())
 
-	<-done
+	m := 0
+	for range q {
+		m += 1
+		if m == n {
+			break
+		}
+	}
 }
 
 func TestLen(t *testing.T) {
@@ -627,6 +629,46 @@ func TestSessionKeys(t *testing.T) {
 	}
 
 	assert.Nil(t, quick.Check(fn, nil))
+}
+
+func TestSessionKeysConcurrent(t *testing.T) {
+	ss := make(chan *Session)
+
+	ws := NewTestServer()
+
+	ws.m.HandleConnect(func(s *Session) {
+		ss <- s
+	})
+
+	server := httptest.NewServer(ws)
+	defer server.Close()
+
+	conn := MustNewDialer(server.URL)
+	defer conn.Close()
+
+	s := <-ss
+
+	var wg sync.WaitGroup
+
+	for i := 0; i < 100; i++ {
+		wg.Add(1)
+
+		go func() {
+			s.Set("test", TestMsg)
+			v1, exists := s.Get("test")
+
+			assert.True(t, exists)
+			assert.Equal(t, v1, TestMsg)
+
+			v2 := s.MustGet("test")
+
+			assert.Equal(t, v1, v2)
+
+			wg.Done()
+		}()
+	}
+
+	wg.Wait()
 }
 
 func TestMisc(t *testing.T) {
