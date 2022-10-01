@@ -5,6 +5,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"sync"
 	"time"
 )
 
@@ -17,6 +18,8 @@ type ClientSession struct {
 	outputDone chan struct{}
 	melody     *MelodyClient
 	open       bool
+
+	mu sync.Mutex
 }
 
 func (s *ClientSession) connect(url url.URL) {
@@ -80,6 +83,9 @@ func (s *ClientSession) writeRaw(message *envelope) error {
 	if s.closed() {
 		return ErrWriteClosed
 	}
+
+	s.mu.Lock()
+	defer s.mu.Unlock()
 
 	s.conn.SetWriteDeadline(time.Now().Add(s.melody.Config.WriteWait))
 	err := s.conn.WriteMessage(message.t, message.msg)
