@@ -1,6 +1,7 @@
 # melody
 
 ![Build Status](https://github.com/olahol/melody/actions/workflows/test.yml/badge.svg)
+[![Codecov](https://img.shields.io/codecov/c/github/olahol/melody)](https://app.codecov.io/github/olahol/melody)
 [![GoDoc](https://godoc.org/github.com/olahol/melody?status.svg)](https://godoc.org/github.com/olahol/melody)
 
 > :notes: Minimalist websocket framework for Go.
