@@ -186,7 +186,7 @@ func (s *Session) CloseWithMsg(msg []byte) error {
 	return nil
 }
 
-// Set is used to store a new key/value pair exclusivelly for this session.
+// Set is used to store a new key/value pair exclusively for this session.
 // It also lazy initializes s.Keys if it was not used previously.
 func (s *Session) Set(key string, value interface{}) {
 	s.rwmutex.Lock()
