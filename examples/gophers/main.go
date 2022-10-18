@@ -14,22 +14,29 @@ type GopherInfo struct {
 }
 
 func main() {
-	router := gin.Default()
-	mrouter := melody.New()
+	r := gin.Default()
+	m := melody.New()
 
-	router.GET("/", func(c *gin.Context) {
+	r.GET("/", func(c *gin.Context) {
 		http.ServeFile(c.Writer, c.Request, "index.html")
 	})
 
-	router.GET("/ws", func(c *gin.Context) {
-		mrouter.HandleRequest(c.Writer, c.Request)
+	r.GET("/ws", func(c *gin.Context) {
+		m.HandleRequest(c.Writer, c.Request)
 	})
 
-	mrouter.HandleConnect(func(s *melody.Session) {
-		ss, _ := mrouter.Sessions()
+	m.HandleConnect(func(s *melody.Session) {
+		ss, _ := m.Sessions()
 
 		for _, o := range ss {
-			info := o.MustGet("info").(*GopherInfo)
+			value, exists := o.Get("info")
+
+			if !exists {
+				continue
+			}
+
+			info := value.(*GopherInfo)
+
 			s.Write([]byte("set " + info.ID + " " + info.X + " " + info.Y))
 		}
 
@@ -39,20 +46,32 @@ func main() {
 		s.Write([]byte("iam " + id))
 	})
 
-	mrouter.HandleDisconnect(func(s *melody.Session) {
-		info := s.MustGet("info").(*GopherInfo)
-		mrouter.BroadcastOthers([]byte("dis "+info.ID), s)
-	})
+	m.HandleDisconnect(func(s *melody.Session) {
+		value, exists := s.Get("info")
 
-	mrouter.HandleMessage(func(s *melody.Session, msg []byte) {
-		p := strings.Split(string(msg), " ")
-		if len(p) == 2 {
-			info := s.MustGet("info").(*GopherInfo)
-			info.X = p[0]
-			info.Y = p[1]
-			mrouter.BroadcastOthers([]byte("set "+info.ID+" "+info.X+" "+info.Y), s)
+		if !exists {
+			return
 		}
+
+		info := value.(*GopherInfo)
+
+		m.BroadcastOthers([]byte("dis "+info.ID), s)
 	})
 
-	router.Run(":5000")
+	m.HandleMessage(func(s *melody.Session, msg []byte) {
+		p := strings.Split(string(msg), " ")
+		value, exists := s.Get("info")
+
+		if len(p) != 2 || !exists {
+			return
+		}
+
+		info := value.(*GopherInfo)
+		info.X = p[0]
+		info.Y = p[1]
+
+		m.BroadcastOthers([]byte("set "+info.ID+" "+info.X+" "+info.Y), s)
+	})
+
+	r.Run(":5000")
 }
