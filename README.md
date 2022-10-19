@@ -183,15 +183,9 @@ func main() {
 
 ## Contributors
 
-* Ola Holmström (@olahol)
-* Shogo Iwano (@shiwano)
-* Matt Caldwell (@mattcaldwell)
-* Heikki Uljas (@huljas)
-* Robbie Trencheny (@robbiet480)
-* yangjinecho (@yangjinecho)
-* lesismal (@lesismal)
-* parkerzhu (@parkerzhu)
-* gabstv (@gabstv)
+<a href="https://github.com/olahol/melody/graphs/contributors">
+	<img src="https://contrib.rocks/image?repo=olahol/melody" />
+</a>
 
 ## FAQ
 
