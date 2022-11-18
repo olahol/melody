@@ -1,0 +1,50 @@
+<html>
+  <head>
+    <title>Melody example: chatting</title>
+  </head>
+
+  <style>
+    #chat {
+      text-align: left;
+      background: #f1f1f1;
+      width: 500px;
+      min-height: 300px;
+      padding: 20px;
+    }
+  </style>
+
+  <body>
+    <center>
+      <h3>Chat</h3>
+      <pre id="chat"></pre>
+      <input placeholder="say something" id="text" type="text">
+    </center>
+
+    <script>
+      var url = "ws://" + window.location.host + "/ws";
+      var ws = new WebSocket(url);
+      var name = "Guest" + Math.floor(Math.random() * 1000);
+
+      var chat = document.getElementById("chat");
+      var text = document.getElementById("text");
+
+      var now = function () {
+        var iso = new Date().toISOString();
+        return iso.split("T")[1].split(".")[0];
+      };
+
+      ws.onmessage = function (msg) {
+        var line =  now() + " " + msg.data + "\n";
+        chat.innerText += line;
+      };
+
+      text.onkeydown = function (e) {
+        if (e.keyCode === 13 && text.value !== "") {
+          ws.send("<" + name + "> " + text.value);
+          text.value = "";
+        }
+      };
+
+    </script>
+  </body>
+</html>
