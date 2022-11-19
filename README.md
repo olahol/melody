@@ -27,6 +27,34 @@ go get github.com/olahol/melody
 
 [![Chat](https://cdn.rawgit.com/olahol/melody/master/examples/chat/demo.gif "Demo")](https://github.com/olahol/melody/tree/master/examples/chat)
 
+```go
+package main
+
+import (
+	"net/http"
+
+	"github.com/olahol/melody"
+)
+
+func main() {
+	m := melody.New()
+
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "index.html")
+	})
+
+	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
+		m.HandleRequest(w, r)
+	})
+
+	m.HandleMessage(func(s *melody.Session, msg []byte) {
+		m.Broadcast(msg)
+	})
+
+	http.ListenAndServe(":5000", nil)
+}
+```
+
 Using [Gin](https://github.com/gin-gonic/gin):
 ```go
 package main
