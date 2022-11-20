@@ -4,7 +4,6 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/olahol/melody"
 )
@@ -14,15 +13,14 @@ type GopherInfo struct {
 }
 
 func main() {
-	r := gin.Default()
 	m := melody.New()
 
-	r.GET("/", func(c *gin.Context) {
-		http.ServeFile(c.Writer, c.Request, "index.html")
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "index.html")
 	})
 
-	r.GET("/ws", func(c *gin.Context) {
-		m.HandleRequest(c.Writer, c.Request)
+	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
+		m.HandleRequest(w, r)
 	})
 
 	m.HandleConnect(func(s *melody.Session) {
@@ -73,5 +71,5 @@ func main() {
 		m.BroadcastOthers([]byte("set "+info.ID+" "+info.X+" "+info.Y), s)
 	})
 
-	r.Run(":5000")
+	http.ListenAndServe(":5000", nil)
 }
