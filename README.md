@@ -55,72 +55,6 @@ func main() {
 }
 ```
 
-Using [Gin](https://github.com/gin-gonic/gin):
-```go
-package main
-
-import (
-	"github.com/gin-gonic/gin"
-	"github.com/olahol/melody"
-	"net/http"
-)
-
-func main() {
-	r := gin.Default()
-	m := melody.New()
-
-	r.GET("/", func(c *gin.Context) {
-		http.ServeFile(c.Writer, c.Request, "index.html")
-	})
-
-	r.GET("/ws", func(c *gin.Context) {
-		m.HandleRequest(c.Writer, c.Request)
-	})
-
-	m.HandleMessage(func(s *melody.Session, msg []byte) {
-		m.Broadcast(msg)
-	})
-
-	r.Run(":5000")
-}
-```
-
-Using [Echo](https://github.com/labstack/echo):
-```go
-package main
-
-import (
-	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
-	"github.com/olahol/melody"
-	"net/http"
-)
-
-func main() {
-	e := echo.New()
-	m := melody.New()
-
-	e.Use(middleware.Logger())
-	e.Use(middleware.Recover())
-
-	e.GET("/", func(c echo.Context) error {
-		http.ServeFile(c.Response().Writer, c.Request(), "index.html")
-		return nil
-	})
-
-	e.GET("/ws", func(c echo.Context) error {
-		m.HandleRequest(c.Response().Writer, c.Request())
-		return nil
-	})
-
-	m.HandleMessage(func(s *melody.Session, msg []byte) {
-		m.Broadcast(msg)
-	})
-
-	e.Logger.Fatal(e.Start(":5000"))
-}
-```
-
 ## [Example: gophers](https://github.com/olahol/melody/tree/master/examples/gophers)
 
 [![Gophers](https://cdn.rawgit.com/olahol/melody/master/examples/gophers/demo.gif "Demo")](https://github.com/olahol/melody/tree/master/examples/gophers)
@@ -132,7 +66,6 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/olahol/melody"
 )
@@ -142,15 +75,14 @@ type GopherInfo struct {
 }
 
 func main() {
-	r := gin.Default()
 	m := melody.New()
 
-	r.GET("/", func(c *gin.Context) {
-		http.ServeFile(c.Writer, c.Request, "index.html")
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "index.html")
 	})
 
-	r.GET("/ws", func(c *gin.Context) {
-		m.HandleRequest(c.Writer, c.Request)
+	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
+		m.HandleRequest(w, r)
 	})
 
 	m.HandleConnect(func(s *melody.Session) {
@@ -201,7 +133,7 @@ func main() {
 		m.BroadcastOthers([]byte("set "+info.ID+" "+info.X+" "+info.Y), s)
 	})
 
-	r.Run(":5000")
+	http.ListenAndServe(":5000", nil)
 }
 ```
 
