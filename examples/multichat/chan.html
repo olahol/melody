@@ -21,7 +21,7 @@
     </center>
 
     <script>
-      var url = "ws://" + window.location.host + window.location.pathname + "/ws";
+      var url = "ws://" + window.location.host + "/ws";
       var ws = new WebSocket(url);
       var name = "Guest" + Math.floor(Math.random() * 1000);
       var channelName = window.location.pathname.split("/")[2];
