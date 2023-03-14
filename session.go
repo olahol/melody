@@ -223,6 +223,17 @@ func (s *Session) MustGet(key string) interface{} {
 	panic("Key \"" + key + "\" does not exist")
 }
 
+// UnSet will delete the key and has no return value
+func (s *Session) UnSet(key string) {
+	s.rwmutex.Lock()
+	defer s.rwmutex.Unlock()
+	if s.Keys != nil {
+		if _, exists := s.Keys[key]; exists {
+			delete(s.Keys, key)
+		}
+	}
+}
+
 // IsClosed returns the status of the connection.
 func (s *Session) IsClosed() bool {
 	return s.closed()
