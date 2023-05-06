@@ -3,3 +3,5 @@ benchmark
 *.swp
 coverage.out
 Makefile
+
+.history
