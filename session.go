@@ -228,9 +228,7 @@ func (s *Session) UnSet(key string) {
 	s.rwmutex.Lock()
 	defer s.rwmutex.Unlock()
 	if s.Keys != nil {
-		if _, exists := s.Keys[key]; exists {
-			delete(s.Keys, key)
-		}
+		delete(s.Keys, key)
 	}
 }
 
