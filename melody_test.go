@@ -765,3 +765,84 @@ func TestHandleSentMessage(t *testing.T) {
 		conn.WriteMessage(websocket.BinaryMessage, TestMsg)
 	})
 }
+
+func TestConcurrentMessageHandling(t *testing.T) {
+	testTimeout := func(cmh bool, msgType int) bool {
+		base := time.Millisecond * 100
+		done := make(chan struct{})
+
+		handler := func(s *Session, msg []byte) {
+			if len(msg) == 0 {
+				done <- struct{}{}
+				return
+			}
+
+			time.Sleep(base * 2)
+		}
+
+		ws := NewTestServerHandler(func(session *Session, msg []byte) {})
+		if msgType == websocket.TextMessage {
+			ws.m.HandleMessage(handler)
+		} else {
+			ws.m.HandleMessageBinary(handler)
+		}
+
+		ws.m.Config.ConcurrentMessageHandling = cmh
+		ws.m.Config.PongWait = base
+
+		var errorSet bool
+		ws.m.HandleError(func(s *Session, err error) {
+			errorSet = true
+			done <- struct{}{}
+		})
+
+		server := httptest.NewServer(ws)
+		defer server.Close()
+
+		conn := MustNewDialer(server.URL)
+		defer conn.Close()
+
+		conn.WriteMessage(msgType, TestMsg)
+		conn.WriteMessage(msgType, TestMsg)
+
+		time.Sleep(base / 4)
+
+		conn.WriteMessage(msgType, nil)
+
+		<-done
+
+		return errorSet
+	}
+
+	t.Run("text should error", func(t *testing.T) {
+		errorSet := testTimeout(false, websocket.TextMessage)
+
+		if !errorSet {
+			t.FailNow()
+		}
+	})
+
+	t.Run("text should not error", func(t *testing.T) {
+		errorSet := testTimeout(true, websocket.TextMessage)
+
+		if errorSet {
+			t.FailNow()
+		}
+	})
+
+	t.Run("binary should error", func(t *testing.T) {
+		errorSet := testTimeout(false, websocket.BinaryMessage)
+
+		if !errorSet {
+			t.FailNow()
+		}
+	})
+
+	t.Run("binary should not error", func(t *testing.T) {
+		errorSet := testTimeout(true, websocket.BinaryMessage)
+
+		if errorSet {
+			t.FailNow()
+		}
+	})
+}

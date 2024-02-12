@@ -133,13 +133,20 @@ func (s *Session) readPump() {
 			break
 		}
 
-		if t == websocket.TextMessage {
-			s.melody.messageHandler(s, message)
+		if s.melody.Config.ConcurrentMessageHandling {
+			go s.handleMessage(t, message)
+		} else {
+			s.handleMessage(t, message)
 		}
+	}
+}
 
-		if t == websocket.BinaryMessage {
-			s.melody.messageHandlerBinary(s, message)
-		}
+func (s *Session) handleMessage(t int, message []byte) {
+	switch t {
+	case websocket.TextMessage:
+		s.melody.messageHandler(s, message)
+	case websocket.BinaryMessage:
+		s.melody.messageHandlerBinary(s, message)
 	}
 }
 

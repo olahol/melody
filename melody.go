@@ -112,6 +112,11 @@ func (m *Melody) HandlePong(fn func(*Session)) {
 }
 
 // HandleMessage fires fn when a text message comes in.
+// NOTE: by default Melody handles messages sequentially for each
+// session. This has the effect that a message handler exceeding the
+// read deadline (Config.PongWait, by default 1 minute) will time out
+// the session. Concurrent message handling can be turned on by setting
+// Config.ConcurrentMessageHandling to true.
 func (m *Melody) HandleMessage(fn func(*Session, []byte)) {
 	m.messageHandler = fn
 }
