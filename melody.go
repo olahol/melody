@@ -26,26 +26,6 @@ const (
 	CloseTLSHandshake            = 1015
 )
 
-// Duplicate of codes from gorilla/websocket for convenience.
-var validReceivedCloseCodes = map[int]bool{
-	// see http://www.iana.org/assignments/websocket/websocket.xhtml#close-code-number
-
-	CloseNormalClosure:           true,
-	CloseGoingAway:               true,
-	CloseProtocolError:           true,
-	CloseUnsupportedData:         true,
-	CloseNoStatusReceived:        false,
-	CloseAbnormalClosure:         false,
-	CloseInvalidFramePayloadData: true,
-	ClosePolicyViolation:         true,
-	CloseMessageTooBig:           true,
-	CloseMandatoryExtension:      true,
-	CloseInternalServerErr:       true,
-	CloseServiceRestart:          true,
-	CloseTryAgainLater:           true,
-	CloseTLSHandshake:            false,
-}
-
 type handleMessageFunc func(*Session, []byte)
 type handleErrorFunc func(*Session, error)
 type handleCloseFunc func(*Session, int, string) error
