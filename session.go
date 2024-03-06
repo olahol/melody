@@ -14,14 +14,14 @@ type Session struct {
 	Request    *http.Request
 	Keys       map[string]interface{}
 	conn       *websocket.Conn
-	output     chan *envelope
+	output     chan envelope
 	outputDone chan struct{}
 	melody     *Melody
 	open       bool
 	rwmutex    *sync.RWMutex
 }
 
-func (s *Session) writeMessage(message *envelope) {
+func (s *Session) writeMessage(message envelope) {
 	if s.closed() {
 		s.melody.errorHandler(s, ErrWriteClosed)
 		return
@@ -34,7 +34,7 @@ func (s *Session) writeMessage(message *envelope) {
 	}
 }
 
-func (s *Session) writeRaw(message *envelope) error {
+func (s *Session) writeRaw(message envelope) error {
 	if s.closed() {
 		return ErrWriteClosed
 	}
@@ -68,7 +68,7 @@ func (s *Session) close() {
 }
 
 func (s *Session) ping() {
-	s.writeRaw(&envelope{t: websocket.PingMessage, msg: []byte{}})
+	s.writeRaw(envelope{t: websocket.PingMessage, msg: []byte{}})
 }
 
 func (s *Session) writePump() {
@@ -156,7 +156,7 @@ func (s *Session) Write(msg []byte) error {
 		return ErrSessionClosed
 	}
 
-	s.writeMessage(&envelope{t: websocket.TextMessage, msg: msg})
+	s.writeMessage(envelope{t: websocket.TextMessage, msg: msg})
 
 	return nil
 }
@@ -167,7 +167,7 @@ func (s *Session) WriteBinary(msg []byte) error {
 		return ErrSessionClosed
 	}
 
-	s.writeMessage(&envelope{t: websocket.BinaryMessage, msg: msg})
+	s.writeMessage(envelope{t: websocket.BinaryMessage, msg: msg})
 
 	return nil
 }
@@ -178,7 +178,7 @@ func (s *Session) Close() error {
 		return ErrSessionClosed
 	}
 
-	s.writeMessage(&envelope{t: websocket.CloseMessage, msg: []byte{}})
+	s.writeMessage(envelope{t: websocket.CloseMessage, msg: []byte{}})
 
 	return nil
 }
@@ -190,7 +190,7 @@ func (s *Session) CloseWithMsg(msg []byte) error {
 		return ErrSessionClosed
 	}
 
-	s.writeMessage(&envelope{t: websocket.CloseMessage, msg: msg})
+	s.writeMessage(envelope{t: websocket.CloseMessage, msg: msg})
 
 	return nil
 }

@@ -61,10 +61,10 @@ func (ss *sessionSet) all() []*Session {
 
 type hub struct {
 	sessions   sessionSet
-	broadcast  chan *envelope
+	broadcast  chan envelope
 	register   chan *Session
 	unregister chan *Session
-	exit       chan *envelope
+	exit       chan envelope
 	open       atomic.Bool
 }
 
@@ -73,10 +73,10 @@ func newHub() *hub {
 		sessions: sessionSet{
 			members: make(map[*Session]struct{}),
 		},
-		broadcast:  make(chan *envelope),
+		broadcast:  make(chan envelope),
 		register:   make(chan *Session),
 		unregister: make(chan *Session),
-		exit:       make(chan *envelope),
+		exit:       make(chan envelope),
 	}
 }
 

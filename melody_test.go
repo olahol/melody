@@ -573,8 +573,8 @@ func TestErrSessionClosed(t *testing.T) {
 	assert.ErrorIs(t, s.Close(), ErrSessionClosed)
 	assert.ErrorIs(t, ws.m.BroadcastMultiple(TestMsg, []*Session{s}), ErrSessionClosed)
 
-	assert.ErrorIs(t, s.writeRaw(nil), ErrWriteClosed)
-	s.writeMessage(nil)
+	assert.ErrorIs(t, s.writeRaw(envelope{}), ErrWriteClosed)
+	s.writeMessage(envelope{})
 }
 
 func TestErrMessageBufferFull(t *testing.T) {

@@ -161,7 +161,7 @@ func (m *Melody) HandleRequestWithKeys(w http.ResponseWriter, r *http.Request, k
 		Request:    r,
 		Keys:       keys,
 		conn:       conn,
-		output:     make(chan *envelope, m.Config.MessageBufferSize),
+		output:     make(chan envelope, m.Config.MessageBufferSize),
 		outputDone: make(chan struct{}),
 		melody:     m,
 		open:       true,
@@ -193,7 +193,7 @@ func (m *Melody) Broadcast(msg []byte) error {
 		return ErrClosed
 	}
 
-	message := &envelope{t: websocket.TextMessage, msg: msg}
+	message := envelope{t: websocket.TextMessage, msg: msg}
 	m.hub.broadcast <- message
 
 	return nil
@@ -205,7 +205,7 @@ func (m *Melody) BroadcastFilter(msg []byte, fn func(*Session) bool) error {
 		return ErrClosed
 	}
 
-	message := &envelope{t: websocket.TextMessage, msg: msg, filter: fn}
+	message := envelope{t: websocket.TextMessage, msg: msg, filter: fn}
 	m.hub.broadcast <- message
 
 	return nil
@@ -234,7 +234,7 @@ func (m *Melody) BroadcastBinary(msg []byte) error {
 		return ErrClosed
 	}
 
-	message := &envelope{t: websocket.BinaryMessage, msg: msg}
+	message := envelope{t: websocket.BinaryMessage, msg: msg}
 	m.hub.broadcast <- message
 
 	return nil
@@ -246,7 +246,7 @@ func (m *Melody) BroadcastBinaryFilter(msg []byte, fn func(*Session) bool) error
 		return ErrClosed
 	}
 
-	message := &envelope{t: websocket.BinaryMessage, msg: msg, filter: fn}
+	message := envelope{t: websocket.BinaryMessage, msg: msg, filter: fn}
 	m.hub.broadcast <- message
 
 	return nil
@@ -273,7 +273,7 @@ func (m *Melody) Close() error {
 		return ErrClosed
 	}
 
-	m.hub.exit <- &envelope{t: websocket.CloseMessage, msg: []byte{}}
+	m.hub.exit <- envelope{t: websocket.CloseMessage, msg: []byte{}}
 
 	return nil
 }
@@ -285,7 +285,7 @@ func (m *Melody) CloseWithMsg(msg []byte) error {
 		return ErrClosed
 	}
 
-	m.hub.exit <- &envelope{t: websocket.CloseMessage, msg: msg}
+	m.hub.exit <- envelope{t: websocket.CloseMessage, msg: msg}
 
 	return nil
 }
