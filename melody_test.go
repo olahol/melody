@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"testing/quick"
 	"time"
@@ -790,9 +791,9 @@ func TestConcurrentMessageHandling(t *testing.T) {
 		ws.m.Config.ConcurrentMessageHandling = cmh
 		ws.m.Config.PongWait = base
 
-		var errorSet bool
+		var errorSet atomic.Bool
 		ws.m.HandleError(func(s *Session, err error) {
-			errorSet = true
+			errorSet.Store(true)
 			done <- struct{}{}
 		})
 
@@ -811,7 +812,7 @@ func TestConcurrentMessageHandling(t *testing.T) {
 
 		<-done
 
-		return errorSet
+		return errorSet.Load()
 	}
 
 	t.Run("text should error", func(t *testing.T) {
