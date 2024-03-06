@@ -12,7 +12,7 @@ import (
 // Session wrapper around websocket connections.
 type Session struct {
 	Request    *http.Request
-	Keys       map[string]interface{}
+	Keys       map[string]any
 	conn       *websocket.Conn
 	output     chan envelope
 	outputDone chan struct{}
@@ -197,12 +197,12 @@ func (s *Session) CloseWithMsg(msg []byte) error {
 
 // Set is used to store a new key/value pair exclusively for this session.
 // It also lazy initializes s.Keys if it was not used previously.
-func (s *Session) Set(key string, value interface{}) {
+func (s *Session) Set(key string, value any) {
 	s.rwmutex.Lock()
 	defer s.rwmutex.Unlock()
 
 	if s.Keys == nil {
-		s.Keys = make(map[string]interface{})
+		s.Keys = make(map[string]any)
 	}
 
 	s.Keys[key] = value
@@ -210,7 +210,7 @@ func (s *Session) Set(key string, value interface{}) {
 
 // Get returns the value for the given key, ie: (value, true).
 // If the value does not exists it returns (nil, false)
-func (s *Session) Get(key string) (value interface{}, exists bool) {
+func (s *Session) Get(key string) (value any, exists bool) {
 	s.rwmutex.RLock()
 	defer s.rwmutex.RUnlock()
 
@@ -222,7 +222,7 @@ func (s *Session) Get(key string) (value interface{}, exists bool) {
 }
 
 // MustGet returns the value for the given key if it exists, otherwise it panics.
-func (s *Session) MustGet(key string) interface{} {
+func (s *Session) MustGet(key string) any {
 	if value, exists := s.Get(key); exists {
 		return value
 	}

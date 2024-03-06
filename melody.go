@@ -146,7 +146,7 @@ func (m *Melody) HandleRequest(w http.ResponseWriter, r *http.Request) error {
 }
 
 // HandleRequestWithKeys does the same as HandleRequest but populates session.Keys with keys.
-func (m *Melody) HandleRequestWithKeys(w http.ResponseWriter, r *http.Request, keys map[string]interface{}) error {
+func (m *Melody) HandleRequestWithKeys(w http.ResponseWriter, r *http.Request, keys map[string]any) error {
 	if m.hub.closed() {
 		return ErrClosed
 	}
