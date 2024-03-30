@@ -99,13 +99,14 @@ loop:
 				}
 			})
 		case m := <-h.exit:
+			h.open.Store(false)
+
 			h.sessions.each(func(s *Session) {
 				s.writeMessage(m)
 				s.Close()
 			})
 
 			h.sessions.clear()
-			h.open.Store(false)
 
 			break loop
 		}
