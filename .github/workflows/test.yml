@@ -5,14 +5,17 @@ on:
       - master
 jobs:
   test:
-    runs-on: 'ubuntu-latest'
+    strategy:
+      matrix:
+        go-version: ["1.20", "1.21", "1.22"]
+    runs-on: "ubuntu-latest"
     steps:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 2
       - uses: actions/setup-go@v3
         with:
-          go-version: '1.20'
+          go-version: ${{ matrix.go-version }}
       - run: go get -t -v ./...
       - run: go test -race -coverprofile=coverage.out -covermode=atomic -timeout 60s
       - uses: codecov/codecov-action@v3
