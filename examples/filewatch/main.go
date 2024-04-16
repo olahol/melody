@@ -1,8 +1,8 @@
 package main
 
 import (
-	"io/ioutil"
 	"net/http"
+	"os"
 
 	"github.com/fsnotify/fsnotify"
 	"github.com/olahol/melody"
@@ -23,7 +23,7 @@ func main() {
 	})
 
 	m.HandleConnect(func(s *melody.Session) {
-		content, _ := ioutil.ReadFile(file)
+		content, _ := os.ReadFile(file)
 		s.Write(content)
 	})
 
@@ -31,7 +31,7 @@ func main() {
 		for {
 			ev := <-w.Events
 			if ev.Op == fsnotify.Write {
-				content, _ := ioutil.ReadFile(ev.Name)
+				content, _ := os.ReadFile(ev.Name)
 				m.Broadcast(content)
 			}
 		}
