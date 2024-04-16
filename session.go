@@ -253,3 +253,9 @@ func (s *Session) LocalAddr() net.Addr {
 func (s *Session) RemoteAddr() net.Addr {
 	return s.conn.RemoteAddr()
 }
+
+// WebsocketConnection returns the underlying websocket connection.
+// This can be used to e.g. set/read additional websocket options or to write sychronous messages.
+func (s *Session) WebsocketConnection() *websocket.Conn {
+	return s.conn
+}
