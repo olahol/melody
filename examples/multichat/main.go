@@ -9,16 +9,15 @@ import (
 func main() {
 	m := melody.New()
 
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path == "/" {
-			http.ServeFile(w, r, "index.html")
-			return
-		}
+	http.HandleFunc("GET /", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "index.html")
+	})
 
+	http.HandleFunc("GET /channel/{chan}", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "chan.html")
 	})
 
-	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("GET /channel/{chan}/ws", func(w http.ResponseWriter, r *http.Request) {
 		m.HandleRequest(w, r)
 	})
 
