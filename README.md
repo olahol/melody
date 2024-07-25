@@ -63,16 +63,14 @@ func main() {
 package main
 
 import (
+	"fmt"
 	"net/http"
-	"strings"
+	"sync/atomic"
 
-	"github.com/google/uuid"
 	"github.com/olahol/melody"
 )
 
-type GopherInfo struct {
-	ID, X, Y string
-}
+var idCounter atomic.Int64
 
 func main() {
 	m := melody.New()
@@ -86,51 +84,23 @@ func main() {
 	})
 
 	m.HandleConnect(func(s *melody.Session) {
-		ss, _ := m.Sessions()
+		id := idCounter.Add(1)
 
-		for _, o := range ss {
-			value, exists := o.Get("info")
+		s.Set("id", id)
 
-			if !exists {
-				continue
-			}
-
-			info := value.(*GopherInfo)
-
-			s.Write([]byte("set " + info.ID + " " + info.X + " " + info.Y))
-		}
-
-		id := uuid.NewString()
-		s.Set("info", &GopherInfo{id, "0", "0"})
-
-		s.Write([]byte("iam " + id))
+		s.Write([]byte(fmt.Sprintf("iam %d", id)))
 	})
 
 	m.HandleDisconnect(func(s *melody.Session) {
-		value, exists := s.Get("info")
-
-		if !exists {
-			return
+		if id, ok := s.Get("id"); ok {
+			m.BroadcastOthers([]byte(fmt.Sprintf("dis %d", id)), s)
 		}
-
-		info := value.(*GopherInfo)
-
-		m.BroadcastOthers([]byte("dis "+info.ID), s)
 	})
 
 	m.HandleMessage(func(s *melody.Session, msg []byte) {
-		p := strings.Split(string(msg), " ")
-		value, exists := s.Get("info")
-
-		if len(p) != 2 || !exists {
-			return
+		if id, ok := s.Get("id"); ok {
+			m.BroadcastOthers([]byte(fmt.Sprintf("set %d %s", id, msg)), s)
 		}
-
-		info := value.(*GopherInfo)
-		info.X = p[0]
-		info.Y = p[1]
-
-		m.BroadcastOthers([]byte("set "+info.ID+" "+info.X+" "+info.Y), s)
 	})
 
 	http.ListenAndServe(":5000", nil)
