@@ -5,112 +5,18 @@ import (
 	"sync/atomic"
 )
 
-type sessionSet struct {
-	mu      sync.RWMutex
-	members map[*Session]struct{}
-}
-
-func (ss *sessionSet) add(s *Session) {
-	ss.mu.Lock()
-	defer ss.mu.Unlock()
-
-	ss.members[s] = struct{}{}
-}
-
-func (ss *sessionSet) del(s *Session) {
-	ss.mu.Lock()
-	defer ss.mu.Unlock()
-
-	delete(ss.members, s)
-}
-
-func (ss *sessionSet) clear() {
-	ss.mu.Lock()
-	defer ss.mu.Unlock()
-
-	ss.members = make(map[*Session]struct{})
-}
-
-func (ss *sessionSet) each(cb func(*Session)) {
-	ss.mu.RLock()
-	defer ss.mu.RUnlock()
-
-	for s := range ss.members {
-		cb(s)
-	}
-}
-
-func (ss *sessionSet) len() int {
-	ss.mu.RLock()
-	defer ss.mu.RUnlock()
-
-	return len(ss.members)
-}
-
-func (ss *sessionSet) all() []*Session {
-	ss.mu.RLock()
-	defer ss.mu.RUnlock()
-
-	s := make([]*Session, 0, len(ss.members))
-	for k := range ss.members {
-		s = append(s, k)
-	}
-
-	return s
-}
-
 type hub struct {
-	sessions   sessionSet
-	broadcast  chan envelope
-	register   chan *Session
-	unregister chan *Session
-	exit       chan envelope
-	open       atomic.Bool
+	mu       sync.RWMutex
+	sessions map[*Session]struct{}
+	open     atomic.Bool
 }
 
 func newHub() *hub {
-	return &hub{
-		sessions: sessionSet{
-			members: make(map[*Session]struct{}),
-		},
-		broadcast:  make(chan envelope),
-		register:   make(chan *Session),
-		unregister: make(chan *Session),
-		exit:       make(chan envelope),
+	hub := &hub{
+		sessions: make(map[*Session]struct{}),
 	}
-}
-
-func (h *hub) run() {
-	h.open.Store(true)
-
-loop:
-	for {
-		select {
-		case s := <-h.register:
-			h.sessions.add(s)
-		case s := <-h.unregister:
-			h.sessions.del(s)
-		case m := <-h.broadcast:
-			h.sessions.each(func(s *Session) {
-				if m.filter == nil {
-					s.writeMessage(m)
-				} else if m.filter(s) {
-					s.writeMessage(m)
-				}
-			})
-		case m := <-h.exit:
-			h.open.Store(false)
-
-			h.sessions.each(func(s *Session) {
-				s.writeMessage(m)
-				s.Close()
-			})
-
-			h.sessions.clear()
-
-			break loop
-		}
-	}
+	hub.open.Store(true)
+	return hub
 }
 
 func (h *hub) closed() bool {
@@ -118,9 +24,56 @@ func (h *hub) closed() bool {
 }
 
 func (h *hub) len() int {
-	return h.sessions.len()
+	h.mu.RLock()
+	defer h.mu.RUnlock()
+
+	return len(h.sessions)
 }
 
 func (h *hub) all() []*Session {
-	return h.sessions.all()
+	h.mu.RLock()
+	defer h.mu.RUnlock()
+
+	result := make([]*Session, 0, len(h.sessions))
+	for s := range h.sessions {
+		result = append(result, s)
+	}
+	return result
+}
+
+func (h *hub) register(s *Session) {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+
+	h.sessions[s] = struct{}{}
+}
+
+func (h *hub) unregister(s *Session) {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+
+	delete(h.sessions, s)
+}
+
+func (h *hub) exit(msg envelope) {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+
+	for s := range h.sessions {
+		s.writeMessage(msg)
+		s.Close()
+	}
+	h.sessions = make(map[*Session]struct{})
+	h.open.Store(false)
+}
+
+func (h *hub) broadcast(msg envelope) {
+	h.mu.RLock()
+	defer h.mu.RUnlock()
+
+	for s := range h.sessions {
+		if msg.filter == nil || msg.filter(s) {
+			s.writeMessage(msg)
+		}
+	}
 }

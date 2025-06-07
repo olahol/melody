@@ -56,10 +56,6 @@ func New() *Melody {
 		CheckOrigin:     func(r *http.Request) bool { return true },
 	}
 
-	hub := newHub()
-
-	go hub.run()
-
 	return &Melody{
 		Config:                   newConfig(),
 		Upgrader:                 upgrader,
@@ -72,7 +68,7 @@ func New() *Melody {
 		connectHandler:           func(*Session) {},
 		disconnectHandler:        func(*Session) {},
 		pongHandler:              func(*Session) {},
-		hub:                      hub,
+		hub:                      newHub(),
 	}
 }
 
@@ -168,7 +164,7 @@ func (m *Melody) HandleRequestWithKeys(w http.ResponseWriter, r *http.Request, k
 		rwmutex:    &sync.RWMutex{},
 	}
 
-	m.hub.register <- session
+	m.hub.register(session)
 
 	m.connectHandler(session)
 
@@ -177,7 +173,7 @@ func (m *Melody) HandleRequestWithKeys(w http.ResponseWriter, r *http.Request, k
 	session.readPump()
 
 	if !m.hub.closed() {
-		m.hub.unregister <- session
+		m.hub.unregister(session)
 	}
 
 	session.close()
@@ -194,7 +190,7 @@ func (m *Melody) Broadcast(msg []byte) error {
 	}
 
 	message := envelope{t: websocket.TextMessage, msg: msg}
-	m.hub.broadcast <- message
+	m.hub.broadcast(message)
 
 	return nil
 }
@@ -206,7 +202,7 @@ func (m *Melody) BroadcastFilter(msg []byte, fn func(*Session) bool) error {
 	}
 
 	message := envelope{t: websocket.TextMessage, msg: msg, filter: fn}
-	m.hub.broadcast <- message
+	m.hub.broadcast(message)
 
 	return nil
 }
@@ -235,7 +231,7 @@ func (m *Melody) BroadcastBinary(msg []byte) error {
 	}
 
 	message := envelope{t: websocket.BinaryMessage, msg: msg}
-	m.hub.broadcast <- message
+	m.hub.broadcast(message)
 
 	return nil
 }
@@ -247,7 +243,7 @@ func (m *Melody) BroadcastBinaryFilter(msg []byte, fn func(*Session) bool) error
 	}
 
 	message := envelope{t: websocket.BinaryMessage, msg: msg, filter: fn}
-	m.hub.broadcast <- message
+	m.hub.broadcast(message)
 
 	return nil
 }
@@ -273,7 +269,7 @@ func (m *Melody) Close() error {
 		return ErrClosed
 	}
 
-	m.hub.exit <- envelope{t: websocket.CloseMessage, msg: []byte{}}
+	m.hub.exit(envelope{t: websocket.CloseMessage, msg: []byte{}})
 
 	return nil
 }
@@ -285,7 +281,7 @@ func (m *Melody) CloseWithMsg(msg []byte) error {
 		return ErrClosed
 	}
 
-	m.hub.exit <- envelope{t: websocket.CloseMessage, msg: msg}
+	m.hub.exit(envelope{t: websocket.CloseMessage, msg: msg})
 
 	return nil
 }
