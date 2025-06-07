@@ -2,7 +2,6 @@ package melody
 
 import (
 	"net/http"
-	"sync"
 
 	"github.com/gorilla/websocket"
 )
@@ -161,7 +160,6 @@ func (m *Melody) HandleRequestWithKeys(w http.ResponseWriter, r *http.Request, k
 		outputDone: make(chan struct{}),
 		melody:     m,
 		open:       true,
-		rwmutex:    &sync.RWMutex{},
 	}
 
 	m.hub.register(session)

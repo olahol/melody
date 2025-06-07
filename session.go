@@ -18,7 +18,7 @@ type Session struct {
 	outputDone chan struct{}
 	melody     *Melody
 	open       bool
-	rwmutex    *sync.RWMutex
+	rwmutex    sync.RWMutex
 }
 
 func (s *Session) writeMessage(message envelope) {
