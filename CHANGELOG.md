@@ -1,3 +1,7 @@
+## 2025-06-08 (v1.3.0)
+
+* Refactor and simplify hub by @TheSven73 (PR-98).
+
 ## 2022-09-12 (v1.1.0)
 
 * Create Go module.
