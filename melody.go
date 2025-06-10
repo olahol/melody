@@ -71,6 +71,15 @@ func New() *Melody {
 	}
 }
 
+// NewWithConfig creates a melody instance with Custom configuration.
+func NewWithConfig(options ...Option) *Melody {
+	m := New()
+	for _, opt := range options {
+		opt(m.Config)
+	}
+	return m
+}
+
 // HandleConnect fires fn when a session connects.
 func (m *Melody) HandleConnect(fn func(*Session)) {
 	m.connectHandler = fn
